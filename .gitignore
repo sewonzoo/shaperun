@@ -23,3 +23,9 @@ Thumbs.db
 
 # GPX output (테스트용 파일)
 *.gpx
+
+# Backend osmnx graph cache (대용량 바이너리)
+backend/cache/
+
+# TypeScript 빌드 아티팩트
+frontend/tsconfig.tsbuildinfo
