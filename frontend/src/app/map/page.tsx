@@ -344,7 +344,7 @@ export default function MapPage() {
 
   // Header dropdown items
   const loggedInItems: DropdownItem[] = [
-    { label: '내 코스', onClick: () => router.push('/feed') },
+    { label: '내 코스', onClick: () => router.push('/my-courses') },
     { label: '가민 가이드', onClick: () => setShowGarminModal(true) },
     { label: '로그아웃', onClick: handleSignOut, className: 'text-red-500' },
   ]
@@ -546,7 +546,7 @@ export default function MapPage() {
             코스가 저장됐어요
             <button
               className="pointer-events-auto bg-white/20 hover:bg-white/30 text-white text-[12px] font-semibold px-3 py-1 rounded-full transition-colors"
-              onClick={() => router.push('/feed')}
+              onClick={() => router.push('/my-courses')}
             >
               피드 보기
             </button>

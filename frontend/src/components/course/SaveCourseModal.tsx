@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { saveCourse } from '@/lib/courses'
-import { createClient } from '@/lib/supabase/client'
 import type { LngLat, RouteSegment } from '@/lib/api'
 
 interface Props {
@@ -19,9 +18,10 @@ function defaultTitle(segments: RouteSegment[]): string {
 }
 
 export default function SaveCourseModal({ waypoints, segments, loopClosed, onClose, onSaved }: Props) {
-  const [title, setTitle] = useState(() => defaultTitle(segments))
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [title,    setTitle]    = useState(() => defaultTitle(segments))
+  const [isPublic, setIsPublic] = useState(false)
+  const [saving,   setSaving]   = useState(false)
+  const [error,    setError]    = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => { inputRef.current?.focus(); inputRef.current?.select() }, [])
@@ -32,10 +32,7 @@ export default function SaveCourseModal({ waypoints, segments, loopClosed, onClo
     setSaving(true)
     setError(null)
     try {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      console.log('current user:', user?.id)
-      await saveCourse({ title: t, waypoints, segments, loop_closed: loopClosed })
+      await saveCourse({ title: t, waypoints, segments, loop_closed: loopClosed, is_public: isPublic })
       onSaved()
     } catch {
       setError('저장에 실패했어요. 다시 시도해주세요.')
@@ -44,16 +41,12 @@ export default function SaveCourseModal({ waypoints, segments, loopClosed, onClo
   }
 
   return (
-    <div
-      className="absolute inset-0 z-50 flex items-end justify-center"
-      onClick={onClose}
-    >
+    <div className="absolute inset-0 z-50 flex items-end justify-center" onClick={onClose}>
       <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]" />
       <div
         className="relative w-full max-w-sm bg-white rounded-t-3xl shadow-2xl px-6 pt-5 pb-10 pointer-events-auto"
         onClick={e => e.stopPropagation()}
       >
-        {/* Handle */}
         <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-6" />
 
         <h2 className="text-base font-bold text-gray-900 mb-1">코스 저장</h2>
@@ -67,15 +60,27 @@ export default function SaveCourseModal({ waypoints, segments, loopClosed, onClo
           onKeyDown={e => { if (e.key === 'Enter') handleSave() }}
           maxLength={60}
           placeholder="예: 한강 5km 코스"
-          className="w-full h-12 rounded-2xl border border-gray-200 px-4 text-[14px] text-gray-800 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition mb-2"
+          className="w-full h-12 rounded-2xl border border-gray-200 px-4 text-[14px] text-gray-800 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition mb-3"
           disabled={saving}
         />
 
-        {error && (
-          <p className="text-[12px] text-red-500 mb-3 pl-1">{error}</p>
-        )}
+        {/* Public toggle */}
+        <label className="flex items-center gap-3 cursor-pointer select-none mb-2">
+          <div
+            onClick={() => setIsPublic(p => !p)}
+            className={`relative w-10 h-6 rounded-full transition-colors ${isPublic ? 'bg-blue-500' : 'bg-gray-200'}`}
+          >
+            <span className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${isPublic ? 'translate-x-5' : 'translate-x-1'}`} />
+          </div>
+          <div>
+            <p className="text-[13px] font-semibold text-gray-800">커뮤니티에 공개</p>
+            <p className="text-[11px] text-gray-400">다른 사람들이 이 코스를 다운로드할 수 있어요</p>
+          </div>
+        </label>
 
-        <div className="flex gap-3 mt-4">
+        {error && <p className="text-[12px] text-red-500 mt-2 pl-1">{error}</p>}
+
+        <div className="flex gap-3 mt-5">
           <button
             onClick={onClose}
             disabled={saving}
