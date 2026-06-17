@@ -4,10 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { deleteCourse, toggleCoursePublic } from '@/lib/courses'
 import type { Course } from '@/lib/courses'
-
-function formatDist(m: number) {
-  return m >= 1000 ? `${(m / 1000).toFixed(1)} km` : `${m} m`
-}
+import CoursePreviewSVG from '@/components/course/CoursePreviewSVG'
 
 function formatDate(iso: string) {
   const diff = Date.now() - new Date(iso).getTime()
@@ -19,6 +16,10 @@ function formatDate(iso: string) {
   const mo = Math.floor(d / 30)
   if (mo < 12) return `${mo}달 전`
   return `${Math.floor(mo / 12)}년 전`
+}
+
+function formatDist(m: number) {
+  return m >= 1000 ? `${(m / 1000).toFixed(1)} km` : `${m} m`
 }
 
 function IconTrash() {
@@ -46,8 +47,8 @@ interface LngLat { lng: number; lat: number }
 export default function MyCourseList({ courses: initial }: { courses: Course[] }) {
   const router = useRouter()
   const [courses, setCourses] = useState(initial)
-  const [deleting,  setDeleting]  = useState<string | null>(null)
-  const [toggling,  setToggling]  = useState<string | null>(null)
+  const [deleting, setDeleting] = useState<string | null>(null)
+  const [toggling, setToggling] = useState<string | null>(null)
 
   const handleDelete = async (id: string) => {
     if (!window.confirm('이 코스를 삭제할까요?')) return
@@ -101,76 +102,81 @@ export default function MyCourseList({ courses: initial }: { courses: Course[] }
           key={course.id}
           className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
         >
-          <div className="px-4 pt-4 pb-3">
-            {/* Title row */}
-            <div className="flex items-start justify-between gap-2 mb-1">
-              <h3 className="text-[14px] font-bold text-gray-900 flex-1 min-w-0 truncate">
-                {course.title}
-              </h3>
-              <div className="flex items-center gap-1 shrink-0">
+          {/* Top: preview + info */}
+          <div className="p-3 flex gap-3">
+            <CoursePreviewSVG segments={course.segments ?? []} size={80} />
+
+            <div className="flex-1 min-w-0 flex flex-col justify-between">
+              {/* Title + badges */}
+              <div className="flex items-start gap-1.5 min-w-0">
+                <h3 className="text-[14px] font-bold text-gray-900 truncate flex-1 leading-snug">
+                  {course.title}
+                </h3>
                 {course.loop_closed && (
-                  <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
+                  <span className="shrink-0 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full">
                     루프
                   </span>
                 )}
               </div>
-            </div>
 
-            {/* Meta */}
-            <p className="text-[12px] text-gray-400 mb-3">
-              {formatDate(course.created_at)}
-              {course.original_user_name && (
-                <> · <span className="text-blue-400">출처: {course.original_user_name}</span></>
-              )}
-            </p>
+              {/* Meta */}
+              <p className="text-[11px] text-gray-400 mt-1 truncate">
+                {formatDate(course.created_at)}
+                {course.region_name && <> · {course.region_name}</>}
+                {course.original_user_name && (
+                  <> · <span className="text-blue-400">출처: {course.original_user_name}</span></>
+                )}
+              </p>
 
-            {/* Stats + public toggle */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', marginBottom: '12px' }}>
-              <span style={{ fontSize: '14px', color: '#666' }}>
-                {course.distance_m >= 1000 ? `${(course.distance_m / 1000).toFixed(1)} km` : `${course.distance_m} m`}
-              </span>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
-                <span style={{ fontSize: '12px', color: course.is_public ? '#3b82f6' : '#9ca3af' }}>
-                  {course.is_public ? '공개' : '비공개'}
+              {/* Stats + toggle */}
+              <div className="flex items-center justify-between mt-2">
+                <span className="text-[12px] font-semibold text-gray-700">
+                  {formatDist(course.distance_m)}
                 </span>
-                <button
-                  onClick={() => handleTogglePublic(course.id, course.is_public)}
-                  disabled={toggling === course.id}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors disabled:opacity-40 ${course.is_public ? 'bg-blue-500' : 'bg-gray-300'}`}
-                >
-                  {toggling === course.id ? (
-                    <span className="absolute inset-0 flex items-center justify-center">
-                      <span className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                    </span>
-                  ) : (
-                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${course.is_public ? 'translate-x-6' : 'translate-x-1'}`} />
-                  )}
-                </button>
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px]" style={{ color: course.is_public ? '#3b82f6' : '#9ca3af' }}>
+                    {course.is_public ? '공개' : '비공개'}
+                  </span>
+                  <button
+                    onClick={() => handleTogglePublic(course.id, course.is_public)}
+                    disabled={toggling === course.id}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors disabled:opacity-40 ${course.is_public ? 'bg-blue-500' : 'bg-gray-300'}`}
+                  >
+                    {toggling === course.id ? (
+                      <span className="absolute inset-0 flex items-center justify-center">
+                        <span className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                      </span>
+                    ) : (
+                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${course.is_public ? 'translate-x-6' : 'translate-x-1'}`} />
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
+          </div>
 
-            {/* Actions */}
-            <div className="flex gap-2">
-              <button
-                onClick={() => handleView(course)}
-                className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-xl bg-gray-50 hover:bg-gray-100 text-[12px] font-semibold text-gray-700 transition-colors border border-gray-100"
-              >
-                <IconMap />
-                지도에서 보기
-              </button>
-              <button
-                onClick={() => handleDelete(course.id)}
-                disabled={deleting === course.id}
-                className="flex items-center justify-center gap-1.5 h-9 px-4 rounded-xl bg-red-50 hover:bg-red-100 text-[12px] font-semibold text-red-500 transition-colors disabled:opacity-40"
-              >
-                {deleting === course.id ? (
-                  <span className="w-4 h-4 border-2 border-red-400 border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  <IconTrash />
-                )}
-                삭제
-              </button>
-            </div>
+          {/* Bottom: actions */}
+          <div className="flex border-t border-gray-50">
+            <button
+              onClick={() => handleView(course)}
+              className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-[12px] font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
+            >
+              <IconMap />
+              지도에서 보기
+            </button>
+            <div className="w-px bg-gray-50" />
+            <button
+              onClick={() => handleDelete(course.id)}
+              disabled={deleting === course.id}
+              className="flex items-center justify-center gap-1.5 px-5 py-2.5 text-[12px] font-semibold text-red-400 hover:bg-red-50 transition-colors disabled:opacity-40"
+            >
+              {deleting === course.id ? (
+                <span className="w-4 h-4 border-2 border-red-400 border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <IconTrash />
+              )}
+              삭제
+            </button>
           </div>
         </div>
       ))}
