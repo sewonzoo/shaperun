@@ -7,6 +7,7 @@ import { downloadGPX } from '@/lib/gpx'
 import type { LngLat, RouteSegment } from '@/lib/api'
 import type { NavInfo } from '@/lib/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { getRegionName } from '@/lib/courses'
 import SaveCourseModal from '@/components/course/SaveCourseModal'
 import GarminGuideModal from '@/components/ui/GarminGuideModal'
 import Logo from '@/components/ui/Logo'
@@ -61,11 +62,10 @@ function IconDownload() {
   )
 }
 
-function IconShare() {
+function IconKakao() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" className="w-[17px] h-[17px]">
-      <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-      <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+    <svg viewBox="0 0 24 24" fill="currentColor" className="w-[17px] h-[17px]">
+      <path d="M12 3C6.477 3 2 6.478 2 10.778c0 2.794 1.767 5.248 4.436 6.678L5.4 21l4.59-2.462A11.7 11.7 0 0 0 12 18.778C17.523 18.778 22 15.3 22 10.778S17.523 3 12 3z" />
     </svg>
   )
 }
@@ -189,7 +189,7 @@ export default function MapPage() {
   const [closeLoopTrigger, setCloseLoopTrigger] = useState(0)
   const [isNavigating,  setIsNavigating]  = useState(false)
   const [navInfo,       setNavInfo]       = useState<NavInfo | null>(null)
-  const [shareCopied,   setShareCopied]   = useState(false)
+  const [sharing,       setSharing]       = useState(false)
   const [initialWaypoints, setInitialWaypoints] = useState<LngLat[]>([])
   const [initialLoop,      setInitialLoop]      = useState(false)
   const [searchQuery,   setSearchQuery]   = useState('')
@@ -311,25 +311,40 @@ export default function MapPage() {
 
   const stopNav = useCallback(() => { setIsNavigating(false); setNavInfo(null) }, [])
 
-  const handleShare = useCallback(() => {
+  const handleKakaoShare = useCallback(async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const kakao = (window as any).Kakao
+    if (!kakao?.Share) {
+      alert('카카오 SDK가 아직 로드 중입니다. 잠시 후 다시 시도해주세요.')
+      return
+    }
+
     const isLooped = waypoints.length > 0 && segments.length === waypoints.length
     const wpsStr = waypoints.map(w => `${w.lng.toFixed(6)},${w.lat.toFixed(6)}`).join('_')
     const params = new URLSearchParams({ wps: wpsStr })
     if (isLooped) params.set('loop', '1')
-    const url = `${window.location.origin}/map?${params}`
-    navigator.clipboard.writeText(url).then(() => {
-      setShareCopied(true)
-      setTimeout(() => setShareCopied(false), 2500)
-    }).catch(() => {
-      const ta = document.createElement('textarea')
-      ta.value = url
-      ta.style.cssText = 'position:fixed;opacity:0'
-      document.body.appendChild(ta)
-      ta.select()
-      document.execCommand('copy')
-      document.body.removeChild(ta)
-      setShareCopied(true)
-      setTimeout(() => setShareCopied(false), 2500)
+    const courseUrl = `${window.location.origin}/map?${params}`
+    const distKm = (segments.reduce((s, seg) => s + seg.distance, 0) / 1000).toFixed(1)
+
+    setSharing(true)
+    let description = `${distKm}km 코스`
+    if (waypoints[0]) {
+      const region = await getRegionName(waypoints[0].lng, waypoints[0].lat).catch(() => null)
+      if (region) description = `${region} · ${distKm}km`
+    }
+    setSharing(false)
+
+    kakao.Share.sendDefault({
+      objectType: 'feed',
+      content: {
+        title: 'ShapeRun 코스',
+        description,
+        imageUrl: `${window.location.origin}/icon.svg`,
+        link: { mobileWebUrl: courseUrl, webUrl: courseUrl },
+      },
+      buttons: [
+        { title: '코스 보기', link: { mobileWebUrl: courseUrl, webUrl: courseUrl } },
+      ],
     })
   }, [waypoints, segments])
 
@@ -520,22 +535,16 @@ export default function MapPage() {
                 GPX
               </button>
               <button
-                onClick={handleShare}
-                className="flex-1 flex items-center justify-center gap-1.5 py-3.5 text-[13px] font-semibold text-violet-500 hover:bg-violet-50 transition-colors"
+                onClick={handleKakaoShare}
+                disabled={sharing}
+                className="flex-1 flex items-center justify-center gap-1.5 py-3.5 text-[13px] font-semibold text-[#3A1D1D] hover:bg-[#FEE500]/20 transition-colors disabled:opacity-40"
               >
-                <IconShare />
+                {sharing
+                  ? <span className="w-4 h-4 border-2 border-[#3A1D1D] border-t-transparent rounded-full animate-spin" />
+                  : <IconKakao />}
                 공유
               </button>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* ── Share toast ──────────────────────────────────────────────────── */}
-      {shareCopied && (
-        <div className="absolute bottom-52 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
-          <div className="bg-gray-900/90 text-white text-sm font-medium px-5 py-2.5 rounded-full shadow-xl backdrop-blur-sm whitespace-nowrap">
-            링크가 복사됐습니다
           </div>
         </div>
       )}

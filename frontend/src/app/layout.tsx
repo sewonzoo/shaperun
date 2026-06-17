@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import './globals.css'
+import KakaoSDKInit from '@/components/ui/KakaoSDKInit'
 
 export const metadata: Metadata = {
   title: 'ShapeRun',
@@ -9,7 +10,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ko">
-      <body className="font-sans">{children}</body>
+      <body className="font-sans">
+        <KakaoSDKInit />
+        {children}
+      </body>
     </html>
   )
 }
