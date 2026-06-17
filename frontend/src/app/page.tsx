@@ -8,6 +8,7 @@ import type { LngLat, RouteSegment } from '@/lib/api'
 import type { NavInfo } from '@/lib/navigation'
 import { createClient } from '@/lib/supabase/client'
 import SaveCourseModal from '@/components/course/SaveCourseModal'
+import GarminGuideModal from '@/components/ui/GarminGuideModal'
 
 const MapView = dynamic(() => import('@/components/map/MapView'), { ssr: false })
 
@@ -160,8 +161,9 @@ export default function Home() {
   const [flyToTarget,  setFlyToTarget]  = useState<{ lng: number; lat: number; id: number } | null>(null)
   const [authUser,       setAuthUser]       = useState<AuthUser | null>(null)
   const [showLoginModal, setShowLoginModal] = useState(false)
-  const [showSaveModal,  setShowSaveModal]  = useState(false)
-  const [savedToast,     setSavedToast]     = useState(false)
+  const [showSaveModal,   setShowSaveModal]   = useState(false)
+  const [showGarminModal, setShowGarminModal] = useState(false)
+  const [savedToast,      setSavedToast]      = useState(false)
   const searchInputRef  = useRef<HTMLInputElement>(null)
   const supabaseRef     = useRef(createClient())
 
@@ -493,6 +495,12 @@ export default function Home() {
                 GPX
               </button>
               <button
+                onClick={() => setShowGarminModal(true)}
+                className="flex-1 flex items-center justify-center gap-1 py-3.5 text-[13px] font-semibold text-teal-600 hover:bg-teal-50 transition-colors"
+              >
+                🏃 가민 가이드
+              </button>
+              <button
                 onClick={handleShare}
                 className="flex-1 flex items-center justify-center gap-1.5 py-3.5 text-[13px] font-semibold text-violet-500 hover:bg-violet-50 transition-colors"
               >
@@ -537,6 +545,11 @@ export default function Home() {
           onClose={() => setShowSaveModal(false)}
           onSaved={handleSaved}
         />
+      )}
+
+      {/* ── Garmin guide modal ───────────────────────────────────────────── */}
+      {showGarminModal && (
+        <GarminGuideModal onClose={() => setShowGarminModal(false)} />
       )}
 
       {/* ── Login modal (bottom sheet) ───────────────────────────────────── */}
