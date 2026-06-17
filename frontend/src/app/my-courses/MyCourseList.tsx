@@ -125,39 +125,25 @@ export default function MyCourseList({ courses: initial }: { courses: Course[] }
             </p>
 
             {/* Stats + public toggle */}
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-3 min-w-0">
-                <span className="text-[13px] font-semibold text-gray-700">
-                  {formatDist(course.distance_m)}
-                </span>
-                {course.is_public && course.download_count > 0 && (
-                  <span className="text-[12px] text-gray-400">
-                    다운로드 {course.download_count}
-                  </span>
-                )}
-              </div>
-
-              {/* Public toggle */}
-              <div className="flex items-center gap-2 shrink-0 pl-3">
-                <span className={`text-[11px] font-semibold ${course.is_public ? 'text-blue-600' : 'text-gray-400'}`}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', marginBottom: '12px' }}>
+              <span style={{ fontSize: '14px', color: '#666' }}>
+                {course.distance_m >= 1000 ? `${(course.distance_m / 1000).toFixed(1)} km` : `${course.distance_m} m`}
+              </span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+                <span style={{ fontSize: '12px', color: course.is_public ? '#3b82f6' : '#9ca3af' }}>
                   {course.is_public ? '공개' : '비공개'}
                 </span>
                 <button
                   onClick={() => handleTogglePublic(course.id, course.is_public)}
                   disabled={toggling === course.id}
-                  className="relative w-9 h-5 rounded-full transition-colors disabled:opacity-40 focus:outline-none"
-                  style={{ background: course.is_public ? '#2563eb' : '#e5e7eb' }}
-                  aria-label={course.is_public ? '비공개로 전환' : '공개로 전환'}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors disabled:opacity-40 ${course.is_public ? 'bg-blue-500' : 'bg-gray-300'}`}
                 >
                   {toggling === course.id ? (
                     <span className="absolute inset-0 flex items-center justify-center">
-                      <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent" />
                     </span>
                   ) : (
-                    <span
-                      className="absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform"
-                      style={{ transform: course.is_public ? 'translateX(18px)' : 'translateX(2px)' }}
-                    />
+                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${course.is_public ? 'translate-x-6' : 'translate-x-1'}`} />
                   )}
                 </button>
               </div>
