@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
 import { deleteCourse, type Course } from '@/lib/courses'
 
 function fmtDist(m: number) {
@@ -66,7 +65,7 @@ export default function CourseList({ initialCourses }: { initialCourses: Course[
     if (!confirm('이 코스를 삭제할까요?')) return
     setDeletingId(id)
     try {
-      await deleteCourse(createClient(), id)
+      await deleteCourse(id)
       setCourses(c => c.filter(x => x.id !== id))
     } catch {
       alert('삭제에 실패했습니다.')

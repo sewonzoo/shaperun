@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { listMyCourses } from '@/lib/courses'
+import type { Course } from '@/lib/courses'
 import LogoutButton from './LogoutButton'
 import CourseList from './CourseList'
 
@@ -14,7 +14,12 @@ export default async function FeedPage() {
   const name   = user.user_metadata?.full_name ?? user.user_metadata?.name ?? user.email?.split('@')[0] ?? '러너'
   const avatar = user.user_metadata?.avatar_url as string | undefined
 
-  const courses = await listMyCourses(supabase).catch(() => [])
+  const { data } = await supabase
+    .from('courses')
+    .select('id, title, distance_m, duration_s, loop_closed, is_public, created_at, waypoints')
+    .order('created_at', { ascending: false })
+    .returns<Course[]>()
+  const courses: Course[] = data ?? []
 
   return (
     <main className="min-h-screen bg-gray-50">

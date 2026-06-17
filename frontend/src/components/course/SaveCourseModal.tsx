@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { createClient } from '@/lib/supabase/client'
 import { saveCourse } from '@/lib/courses'
+import { createClient } from '@/lib/supabase/client'
 import type { LngLat, RouteSegment } from '@/lib/api'
 
 interface Props {
@@ -33,7 +33,9 @@ export default function SaveCourseModal({ waypoints, segments, loopClosed, onClo
     setError(null)
     try {
       const supabase = createClient()
-      await saveCourse(supabase, { title: t, waypoints, segments, loop_closed: loopClosed })
+      const { data: { user } } = await supabase.auth.getUser()
+      console.log('current user:', user?.id)
+      await saveCourse({ title: t, waypoints, segments, loop_closed: loopClosed })
       onSaved()
     } catch {
       setError('저장에 실패했어요. 다시 시도해주세요.')

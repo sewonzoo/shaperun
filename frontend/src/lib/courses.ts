@@ -1,4 +1,4 @@
-import type { SupabaseClient } from '@supabase/supabase-js'
+import { createClient } from '@/lib/supabase/client'
 import type { LngLat, RouteSegment } from './api'
 
 export interface Course {
@@ -14,15 +14,20 @@ export interface Course {
 }
 
 export async function saveCourse(
-  client: SupabaseClient,
   data: { title: string; waypoints: LngLat[]; segments: RouteSegment[]; loop_closed: boolean },
 ): Promise<Course> {
+  const client = createClient()
+  const { data: { session } } = await client.auth.getSession()
+  console.log('saveCourse session:', session ? session.user.id : null)
+  const { data: { user } } = await client.auth.getUser()
   const distance_m = Math.round(data.segments.reduce((s, seg) => s + seg.distance, 0))
   const duration_s = Math.round(data.segments.reduce((s, seg) => s + seg.duration, 0))
 
+  const insertPayload = { user_id: user?.id, title: data.title, distance_m, duration_s, waypoints: data.waypoints, segments: data.segments, loop_closed: data.loop_closed }
+  console.log('insert payload:', JSON.stringify(insertPayload))
   const { data: course, error } = await client
     .from('courses')
-    .insert({ title: data.title, distance_m, duration_s, waypoints: data.waypoints, segments: data.segments, loop_closed: data.loop_closed })
+    .insert(insertPayload)
     .select()
     .single()
 
@@ -30,7 +35,8 @@ export async function saveCourse(
   return course as Course
 }
 
-export async function listMyCourses(client: SupabaseClient): Promise<Course[]> {
+export async function listMyCourses(): Promise<Course[]> {
+  const client = createClient()
   const { data, error } = await client
     .from('courses')
     .select('id, title, distance_m, duration_s, loop_closed, is_public, created_at, waypoints')
@@ -40,7 +46,8 @@ export async function listMyCourses(client: SupabaseClient): Promise<Course[]> {
   return (data ?? []) as Course[]
 }
 
-export async function deleteCourse(client: SupabaseClient, id: string): Promise<void> {
+export async function deleteCourse(id: string): Promise<void> {
+  const client = createClient()
   const { error } = await client.from('courses').delete().eq('id', id)
   if (error) throw error
 }
