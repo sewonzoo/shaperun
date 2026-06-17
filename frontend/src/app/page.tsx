@@ -75,6 +75,15 @@ function LandingInner() {
       <p className="text-[11px] text-gray-300 mt-10 text-center leading-relaxed">
         로그인하면 코스 저장 및 관리가 가능합니다
       </p>
+
+      <a
+        href="/landing.html"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="mt-4 text-[12px] text-blue-400 hover:text-blue-600 transition-colors"
+      >
+        서비스 알아보기 →
+      </a>
     </main>
   )
 }
