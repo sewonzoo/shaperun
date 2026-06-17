@@ -3,6 +3,7 @@
 import { useEffect, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import Logo from '@/components/ui/Logo'
 
 function IconKakao() {
   return (
@@ -39,9 +40,8 @@ function LandingInner() {
     <main className="min-h-screen bg-white flex flex-col items-center justify-center px-6">
 
       {/* Logo */}
-      <div className="flex items-center gap-2.5 mb-3">
-        <span className="w-3 h-3 rounded-full bg-blue-500" />
-        <span className="text-[28px] font-bold tracking-tight text-gray-900">ShapeRun</span>
+      <div className="mb-3">
+        <Logo width={140} height={42} />
       </div>
       <p className="text-[15px] text-gray-400 text-center leading-relaxed mb-14">
         내 달리기 코스를 직접 그려보세요

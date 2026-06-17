@@ -9,6 +9,7 @@ import type { NavInfo } from '@/lib/navigation'
 import { createClient } from '@/lib/supabase/client'
 import SaveCourseModal from '@/components/course/SaveCourseModal'
 import GarminGuideModal from '@/components/ui/GarminGuideModal'
+import Logo from '@/components/ui/Logo'
 
 const MapView = dynamic(() => import('@/components/map/MapView'), { ssr: false })
 
@@ -370,8 +371,7 @@ export default function MapPage() {
       <div className="absolute top-4 left-0 right-0 z-30 px-3 flex justify-center pointer-events-none">
         <div className="relative w-full max-w-md pointer-events-auto">
           <div className="flex items-center gap-2.5 bg-white/95 backdrop-blur-md rounded-full shadow-lg px-4 py-2.5">
-            <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0" />
-            <span className="text-sm font-bold tracking-tight text-gray-900 whitespace-nowrap">ShapeRun</span>
+            <Logo width={110} height={33} />
             <span className="w-px h-4 bg-gray-200 shrink-0" />
             <IconSearch />
             <input
