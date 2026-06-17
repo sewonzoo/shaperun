@@ -122,3 +122,9 @@ export async function deleteCourse(id: string): Promise<void> {
   const { error } = await client.from('courses').delete().eq('id', id)
   if (error) throw error
 }
+
+export async function toggleCoursePublic(id: string, isPublic: boolean): Promise<void> {
+  const client = createClient()
+  const { error } = await client.from('courses').update({ is_public: isPublic }).eq('id', id)
+  if (error) throw error
+}

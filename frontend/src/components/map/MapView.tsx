@@ -20,6 +20,10 @@ interface Props {
   undoTrigger:   number
   closeLoopTrigger: number
   isNavigating:  boolean
+  initialWaypoints?: LngLat[]
+  initialLoop?: boolean
+  flyToTarget?: { lng: number; lat: number; id: number } | null
+  onCenterChange?: (center: { lng: number; lat: number }) => void
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -119,6 +123,7 @@ function IconLocate() {
 export default function MapView({
   onRouteChange, onNavUpdate,
   resetTrigger, undoTrigger, closeLoopTrigger, isNavigating,
+  initialWaypoints, initialLoop, flyToTarget, onCenterChange,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef       = useRef<mapboxgl.Map | null>(null)
@@ -135,11 +140,16 @@ export default function MapView({
   const isNavigatingRef = useRef(false)
 
   // Stable callback refs
-  const onRouteChangeRef = useRef(onRouteChange)
-  const onNavUpdateRef   = useRef(onNavUpdate)
-  useEffect(() => { onRouteChangeRef.current = onRouteChange }, [onRouteChange])
-  useEffect(() => { onNavUpdateRef.current   = onNavUpdate   }, [onNavUpdate])
-  useEffect(() => { isNavigatingRef.current  = isNavigating  }, [isNavigating])
+  const onRouteChangeRef    = useRef(onRouteChange)
+  const onNavUpdateRef      = useRef(onNavUpdate)
+  const onCenterChangeRef   = useRef(onCenterChange)
+  const initialWaypointsRef = useRef(initialWaypoints)
+  const initialLoopRef      = useRef(initialLoop)
+  const didRestoreRef       = useRef(false)
+  useEffect(() => { onRouteChangeRef.current  = onRouteChange  }, [onRouteChange])
+  useEffect(() => { onNavUpdateRef.current    = onNavUpdate    }, [onNavUpdate])
+  useEffect(() => { onCenterChangeRef.current = onCenterChange }, [onCenterChange])
+  useEffect(() => { isNavigatingRef.current   = isNavigating   }, [isNavigating])
 
   // Nav state
   const watchIdRef       = useRef<number | null>(null)
@@ -179,11 +189,17 @@ export default function MapView({
         layout: { 'line-join': 'round', 'line-cap': 'round' },
         paint: { 'line-color': '#2563eb', 'line-width': 3, 'line-opacity': 0.35, 'line-dasharray': [2, 3] },
       })
+      map.on('moveend', () => {
+        const { lng, lat } = map.getCenter()
+        onCenterChangeRef.current?.({ lng, lat })
+      })
       setMapLoaded(true)
-      navigator.geolocation?.getCurrentPosition(
-        ({ coords }) => map.flyTo({ center: [coords.longitude, coords.latitude], zoom: 15, duration: 1200 }),
-        () => {}, { timeout: 8000 },
-      )
+      if (!initialWaypointsRef.current?.length) {
+        navigator.geolocation?.getCurrentPosition(
+          ({ coords }) => map.flyTo({ center: [coords.longitude, coords.latitude], zoom: 15, duration: 1200 }),
+          () => {}, { timeout: 8000 },
+        )
+      }
     })
 
     return () => { map.remove(); mapRef.current = null; setMapLoaded(false) }
@@ -239,8 +255,13 @@ export default function MapView({
     }
 
     map.on('click', onClick)
-    map.getCanvas().style.cursor = 'crosshair'
-    return () => { map.off('click', onClick); map.getCanvas().style.cursor = '' }
+    const canvas = map.getCanvas()
+    if (canvas) canvas.style.cursor = 'crosshair'
+    return () => {
+      map.off('click', onClick)
+      const c = map.getCanvas()
+      if (c) c.style.cursor = ''
+    }
   }, [mapLoaded])
 
   // ── Close loop ────────────────────────────────────────────────────────────
@@ -266,7 +287,7 @@ export default function MapView({
       .then(seg => {
         segmentsRef.current = [...segs, seg]
         if (map) { applyRouteData(map, segmentsRef.current); clearPreview(map) }
-        if (map) map.getCanvas().style.cursor = 'default'
+        if (map) { const c = map.getCanvas(); if (c) c.style.cursor = 'default' }
         onRouteChangeRef.current([...waypointsRef.current], [...segmentsRef.current])
       })
       .catch(() => { clearPreview(map!); setRouteError('루프를 닫는 경로를 찾을 수 없습니다.') })
@@ -284,7 +305,7 @@ export default function MapView({
     if (isLoopClosed(wps, segs)) {
       // Undo the loop-closing segment only; keep all waypoint markers
       segmentsRef.current = segs.slice(0, -1)
-      if (map) { applyRouteData(map, segmentsRef.current); map.getCanvas().style.cursor = 'crosshair' }
+      if (map) { applyRouteData(map, segmentsRef.current); const c = map.getCanvas(); if (c) c.style.cursor = 'crosshair' }
     } else {
       markersRef.current.at(-1)?.remove()
       markersRef.current = markersRef.current.slice(0, -1)
@@ -318,7 +339,7 @@ export default function MapView({
     const navMarker = new mapboxgl.Marker({ element: makeNavDotEl(), anchor: 'center' })
     navMarkerRef.current = navMarker
     let placed = false
-    map.getCanvas().style.cursor = 'default'
+    const navCanvas = map.getCanvas(); if (navCanvas) navCanvas.style.cursor = 'default'
 
     const watchId = navigator.geolocation.watchPosition(
       ({ coords }) => {
@@ -352,10 +373,73 @@ export default function MapView({
       if (mapRef.current) {
         const wps2 = waypointsRef.current
         const segs2 = segmentsRef.current
-        mapRef.current.getCanvas().style.cursor = isLoopClosed(wps2, segs2) ? 'default' : 'crosshair'
+        const c2 = mapRef.current.getCanvas(); if (c2) c2.style.cursor = isLoopClosed(wps2, segs2) ? 'default' : 'crosshair'
       }
     }
   }, [isNavigating])
+
+  // ── Fly to searched location ──────────────────────────────────────────────
+  useEffect(() => {
+    if (!flyToTarget || !mapRef.current) return
+    mapRef.current.flyTo({ center: [flyToTarget.lng, flyToTarget.lat], zoom: 15, duration: 900 })
+  }, [flyToTarget])
+
+  // ── Restore route from shared URL ─────────────────────────────────────────
+  useEffect(() => {
+    const map = mapRef.current
+    const initWps = initialWaypoints
+    if (!mapLoaded || !map || !initWps?.length || didRestoreRef.current) return
+    didRestoreRef.current = true
+
+    const restore = async () => {
+      isRoutingRef.current = true
+      setIsRouting(true)
+      setRouteError(null)
+      try {
+        for (let i = 0; i < initWps.length; i++) {
+          const lngLat = initWps[i]
+          const marker = new mapboxgl.Marker({ element: makeWaypointEl(i) })
+            .setLngLat([lngLat.lng, lngLat.lat]).addTo(map)
+          markersRef.current.push(marker)
+          waypointsRef.current = [...waypointsRef.current, lngLat]
+          if (i > 0) {
+            const seg = await getWalkingRoute(initWps[i - 1], lngLat)
+            segmentsRef.current = [...segmentsRef.current, seg]
+            applyRouteData(map, segmentsRef.current)
+          }
+        }
+        if (initialLoopRef.current && initWps.length >= 2) {
+          const seg = await getWalkingRoute(initWps[initWps.length - 1], initWps[0])
+          segmentsRef.current = [...segmentsRef.current, seg]
+          applyRouteData(map, segmentsRef.current)
+          const rc = map.getCanvas(); if (rc) rc.style.cursor = 'default'
+        }
+        onRouteChangeRef.current([...waypointsRef.current], [...segmentsRef.current])
+
+        // Fit map to restored route
+        const allCoords: [number, number][] = segmentsRef.current.flatMap(s => s.coordinates)
+        if (allCoords.length > 0) {
+          const bounds = allCoords.reduce(
+            (b, c) => b.extend(c),
+            new mapboxgl.LngLatBounds(allCoords[0], allCoords[0]),
+          )
+          map.fitBounds(bounds, { padding: 60, duration: 1000 })
+        }
+      } catch {
+        setRouteError('공유 경로를 불러오는 중 오류가 발생했습니다.')
+      } finally {
+        isRoutingRef.current = false
+        setIsRouting(false)
+      }
+    }
+
+    try {
+      restore()
+    } catch (e) {
+      console.error('restore 에러:', e)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mapLoaded, initialWaypoints])
 
   // ── Reset ──────────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -367,7 +451,7 @@ export default function MapView({
     markersRef.current.forEach(m => m.remove()); markersRef.current = []
     waypointsRef.current = []; segmentsRef.current = []
     setRouteError(null)
-    if (map) { applyRouteData(map, []); clearPreview(map); map.getCanvas().style.cursor = 'crosshair' }
+    if (map) { applyRouteData(map, []); clearPreview(map); const c = map.getCanvas(); if (c) c.style.cursor = 'crosshair' }
     onRouteChangeRef.current([], [])
   }, [resetTrigger])
 

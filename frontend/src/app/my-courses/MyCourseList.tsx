@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { deleteCourse } from '@/lib/courses'
+import { deleteCourse, toggleCoursePublic } from '@/lib/courses'
 import type { Course } from '@/lib/courses'
 
 function formatDist(m: number) {
@@ -46,7 +46,8 @@ interface LngLat { lng: number; lat: number }
 export default function MyCourseList({ courses: initial }: { courses: Course[] }) {
   const router = useRouter()
   const [courses, setCourses] = useState(initial)
-  const [deleting, setDeleting] = useState<string | null>(null)
+  const [deleting,  setDeleting]  = useState<string | null>(null)
+  const [toggling,  setToggling]  = useState<string | null>(null)
 
   const handleDelete = async (id: string) => {
     if (!window.confirm('이 코스를 삭제할까요?')) return
@@ -58,6 +59,18 @@ export default function MyCourseList({ courses: initial }: { courses: Course[] }
       alert('삭제에 실패했어요. 다시 시도해주세요.')
     } finally {
       setDeleting(null)
+    }
+  }
+
+  const handleTogglePublic = async (id: string, current: boolean) => {
+    setToggling(id)
+    try {
+      await toggleCoursePublic(id, !current)
+      setCourses(cs => cs.map(c => c.id === id ? { ...c, is_public: !current } : c))
+    } catch {
+      alert('변경에 실패했어요. 다시 시도해주세요.')
+    } finally {
+      setToggling(null)
     }
   }
 
@@ -95,11 +108,6 @@ export default function MyCourseList({ courses: initial }: { courses: Course[] }
                 {course.title}
               </h3>
               <div className="flex items-center gap-1 shrink-0">
-                {course.is_public && (
-                  <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
-                    공개
-                  </span>
-                )}
                 {course.loop_closed && (
                   <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
                     루프
@@ -109,15 +117,15 @@ export default function MyCourseList({ courses: initial }: { courses: Course[] }
             </div>
 
             {/* Meta */}
-            <p className="text-[12px] text-gray-400 mb-2">
+            <p className="text-[12px] text-gray-400 mb-3">
               {formatDate(course.created_at)}
               {course.original_user_name && (
                 <> · <span className="text-blue-400">출처: {course.original_user_name}</span></>
               )}
             </p>
 
-            {/* Stats */}
-            <div className="flex items-center gap-4 mb-3">
+            {/* Stats + public toggle */}
+            <div className="flex items-center gap-3 mb-3">
               <span className="text-[13px] font-semibold text-gray-700">
                 {formatDist(course.distance_m)}
               </span>
@@ -126,6 +134,31 @@ export default function MyCourseList({ courses: initial }: { courses: Course[] }
                   다운로드 {course.download_count}
                 </span>
               )}
+
+              {/* Public toggle */}
+              <div className="ml-auto flex items-center gap-2">
+                <span className={`text-[11px] font-semibold ${course.is_public ? 'text-blue-600' : 'text-gray-400'}`}>
+                  {course.is_public ? '공개' : '비공개'}
+                </span>
+                <button
+                  onClick={() => handleTogglePublic(course.id, course.is_public)}
+                  disabled={toggling === course.id}
+                  className="relative w-9 h-5 rounded-full transition-colors disabled:opacity-40 focus:outline-none"
+                  style={{ background: course.is_public ? '#2563eb' : '#e5e7eb' }}
+                  aria-label={course.is_public ? '비공개로 전환' : '공개로 전환'}
+                >
+                  {toggling === course.id ? (
+                    <span className="absolute inset-0 flex items-center justify-center">
+                      <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    </span>
+                  ) : (
+                    <span
+                      className="absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform"
+                      style={{ transform: course.is_public ? 'translateX(18px)' : 'translateX(2px)' }}
+                    />
+                  )}
+                </button>
+              </div>
             </div>
 
             {/* Actions */}

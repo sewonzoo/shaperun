@@ -344,6 +344,7 @@ export default function MapPage() {
 
   // Header dropdown items
   const loggedInItems: DropdownItem[] = [
+    { label: '커뮤니티 피드', onClick: () => router.push('/feed') },
     { label: '내 코스', onClick: () => router.push('/my-courses') },
     { label: '가민 가이드', onClick: () => setShowGarminModal(true) },
     { label: '로그아웃', onClick: handleSignOut, className: 'text-red-500' },
