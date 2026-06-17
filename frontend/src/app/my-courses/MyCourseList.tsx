@@ -125,18 +125,20 @@ export default function MyCourseList({ courses: initial }: { courses: Course[] }
             </p>
 
             {/* Stats + public toggle */}
-            <div className="flex items-center gap-3 mb-3">
-              <span className="text-[13px] font-semibold text-gray-700">
-                {formatDist(course.distance_m)}
-              </span>
-              {course.is_public && course.download_count > 0 && (
-                <span className="text-[12px] text-gray-400">
-                  다운로드 {course.download_count}
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <span className="text-[13px] font-semibold text-gray-700">
+                  {formatDist(course.distance_m)}
                 </span>
-              )}
+                {course.is_public && course.download_count > 0 && (
+                  <span className="text-[12px] text-gray-400">
+                    다운로드 {course.download_count}
+                  </span>
+                )}
+              </div>
 
               {/* Public toggle */}
-              <div className="ml-auto flex items-center gap-2">
+              <div className="flex items-center gap-2 shrink-0 pl-3">
                 <span className={`text-[11px] font-semibold ${course.is_public ? 'text-blue-600' : 'text-gray-400'}`}>
                   {course.is_public ? '공개' : '비공개'}
                 </span>
