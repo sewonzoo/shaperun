@@ -29,5 +29,5 @@ export async function GET(request: Request) {
     console.log('callback error:', JSON.stringify(error))
   }
 
-  return NextResponse.redirect(new URL(next, requestUrl.origin))
+  return NextResponse.redirect(new URL(next ?? '/map', requestUrl.origin))
 }
