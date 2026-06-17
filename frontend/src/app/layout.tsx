@@ -4,7 +4,13 @@ import KakaoSDKInit from '@/components/ui/KakaoSDKInit'
 
 export const metadata: Metadata = {
   title: 'ShapeRun',
-  description: '달리기 코스를 원하는 모양으로',
+  description: '내 달리기 코스를 직접 그려보세요',
+  openGraph: {
+    title: 'ShapeRun',
+    description: '내 달리기 코스를 직접 그려보세요',
+    images: ['https://shaperun.vercel.app/icon.svg'],
+    url: 'https://shaperun.vercel.app',
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

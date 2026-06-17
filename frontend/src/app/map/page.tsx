@@ -319,12 +319,8 @@ export default function MapPage() {
       return
     }
 
-    const isLooped = waypoints.length > 0 && segments.length === waypoints.length
-    const wpsStr = waypoints.map(w => `${w.lng.toFixed(6)},${w.lat.toFixed(6)}`).join('_')
-    const params = new URLSearchParams({ wps: wpsStr })
-    if (isLooped) params.set('loop', '1')
-    const courseUrl = `${window.location.origin}/map?${params}`
     const distKm = (segments.reduce((s, seg) => s + seg.distance, 0) / 1000).toFixed(1)
+    const pageUrl = window.location.href
 
     setSharing(true)
     let description = `${distKm}km 코스`
@@ -339,11 +335,11 @@ export default function MapPage() {
       content: {
         title: 'ShapeRun 코스',
         description,
-        imageUrl: `${window.location.origin}/icon.svg`,
-        link: { mobileWebUrl: courseUrl, webUrl: courseUrl },
+        imageUrl: 'https://shaperun.vercel.app/icon.svg',
+        link: { mobileWebUrl: pageUrl, webUrl: pageUrl },
       },
       buttons: [
-        { title: '코스 보기', link: { mobileWebUrl: courseUrl, webUrl: courseUrl } },
+        { title: '코스 보기', link: { mobileWebUrl: pageUrl, webUrl: pageUrl } },
       ],
     })
   }, [waypoints, segments])
