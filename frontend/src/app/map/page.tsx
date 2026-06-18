@@ -472,7 +472,7 @@ export default function MapPage() {
           <div className="w-full max-w-sm bg-white rounded-3xl shadow-2xl overflow-hidden pointer-events-auto">
 
             {/* Stats row */}
-            <div className="flex items-end gap-5 px-6 pt-5 pb-4">
+            <div className="flex items-baseline gap-5 px-6 pt-5 pb-4">
               <div>
                 <span className="text-[2.2rem] font-bold tracking-tight leading-none text-gray-900">
                   {totalDistKm.toFixed(2)}
