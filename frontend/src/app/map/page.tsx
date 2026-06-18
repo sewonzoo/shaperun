@@ -9,7 +9,6 @@ import type { NavInfo } from '@/lib/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { getRegionName } from '@/lib/courses'
 import SaveCourseModal from '@/components/course/SaveCourseModal'
-import GarminGuideModal from '@/components/ui/GarminGuideModal'
 import Logo from '@/components/ui/Logo'
 
 const MapView = dynamic(() => import('@/components/map/MapView'), { ssr: false })
@@ -197,7 +196,6 @@ export default function MapPage() {
   const [flyToTarget,   setFlyToTarget]   = useState<{ lng: number; lat: number; id: number } | null>(null)
   const [authUser,      setAuthUser]      = useState<AuthUser | null>(null)
   const [showSaveModal,   setShowSaveModal]   = useState(false)
-  const [showGarminModal, setShowGarminModal] = useState(false)
   const [savedToast,    setSavedToast]    = useState(false)
   const searchInputRef = useRef<HTMLInputElement>(null)
   const supabaseRef    = useRef(createClient())
@@ -357,12 +355,12 @@ export default function MapPage() {
   const loggedInItems: DropdownItem[] = [
     { label: '커뮤니티 피드', onClick: () => router.push('/feed') },
     { label: '내 코스', onClick: () => router.push('/my-courses') },
-    { label: '가민 가이드', onClick: () => setShowGarminModal(true) },
+    { label: 'GPX 활용 가이드', onClick: () => router.push('/guide') },
     { label: '로그아웃', onClick: handleSignOut, className: 'text-red-500' },
   ]
   const guestItems: DropdownItem[] = [
     { label: '로그인', onClick: () => router.push('/') },
-    { label: '가민 가이드', onClick: () => setShowGarminModal(true) },
+    { label: 'GPX 활용 가이드', onClick: () => router.push('/guide') },
   ]
 
   return (
@@ -569,11 +567,6 @@ export default function MapPage() {
           onClose={() => setShowSaveModal(false)}
           onSaved={handleSaved}
         />
-      )}
-
-      {/* ── Garmin guide modal ───────────────────────────────────────────── */}
-      {showGarminModal && (
-        <GarminGuideModal onClose={() => setShowGarminModal(false)} />
       )}
 
       {/* ── Navigation bar ───────────────────────────────────────────────── */}
