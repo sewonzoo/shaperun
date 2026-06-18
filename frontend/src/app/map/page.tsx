@@ -448,7 +448,7 @@ export default function MapPage() {
 
       {/* ── Left floating: undo + reset ──────────────────────────────────── */}
       {waypoints.length > 0 && !isNavigating && (
-        <div className="absolute left-3 top-[72px] flex flex-col gap-2 z-10">
+        <div className="absolute left-3 top-[110px] flex flex-col gap-2 z-10">
           <button
             onClick={() => setUndoTrigger(t => t + 1)}
             title="마지막 포인트 삭제"
