@@ -488,14 +488,14 @@ export default function MapView({
   return (
     <div className="relative w-full h-full">
       {/* Push Mapbox built-in controls below the header pill (~60px) */}
-      <style>{`.mapboxgl-ctrl-top-right { top: 70px !important; }`}</style>
+      <style>{`.mapboxgl-ctrl-top-right { top: 110px !important; }`}</style>
       <div ref={containerRef} className="w-full h-full" />
 
       {/* Locate button — right side, below Mapbox nav controls */}
       <button
         onClick={handleLocate}
         disabled={isLocating}
-        className="absolute right-2 top-[220px] w-10 h-10 bg-white/95 backdrop-blur-sm rounded-xl shadow-lg flex items-center justify-center text-gray-500 hover:text-blue-600 hover:bg-blue-50 disabled:opacity-40 transition-colors z-10"
+        className="absolute right-2 top-[260px] w-10 h-10 bg-white/95 backdrop-blur-sm rounded-xl shadow-lg flex items-center justify-center text-gray-500 hover:text-blue-600 hover:bg-blue-50 disabled:opacity-40 transition-colors z-10"
         title="현재 위치로 이동"
       >
         {isLocating
