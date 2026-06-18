@@ -495,7 +495,7 @@ export default function MapView({
       <button
         onClick={handleLocate}
         disabled={isLocating}
-        className="absolute right-3 top-[160px] w-10 h-10 bg-white/95 backdrop-blur-sm rounded-xl shadow-lg flex items-center justify-center text-gray-500 hover:text-blue-600 hover:bg-blue-50 disabled:opacity-40 transition-colors z-10"
+        className="absolute right-2 top-[220px] w-10 h-10 bg-white/95 backdrop-blur-sm rounded-xl shadow-lg flex items-center justify-center text-gray-500 hover:text-blue-600 hover:bg-blue-50 disabled:opacity-40 transition-colors z-10"
         title="현재 위치로 이동"
       >
         {isLocating
