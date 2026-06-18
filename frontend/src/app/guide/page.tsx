@@ -9,35 +9,35 @@ type Tab = 'kakao' | 'garmin' | 'galaxy'
 type GarminSub = 'pc' | 'mobile'
 
 const KAKAO_STEPS = [
-  { n: 1, text: 'GPX 다운로드', img: '/guide/kakao-1.png' },
-  { n: 2, text: '파일 열기', img: '/guide/kakao-2.png' },
-  { n: 3, text: '카카오맵 자동실행', img: '/guide/kakao-3.png' },
-  { n: 4, text: '주행시작', img: '/guide/kakao-4.png' },
+  { n: 1, text: '코스 그리기가 완료되면 하단 바에서 [GPX] 버튼을 탭하세요. 파일이 자동으로 다운로드됩니다.', img: '/guide/kakao-1.png' },
+  { n: 2, text: '스마트폰의 [내 파일] 앱을 열고 다운로드 폴더에서 저장된 .gpx 파일을 탭하세요.', img: '/guide/kakao-2.png' },
+  { n: 3, text: 'GPX 파일을 열면 카카오맵이 자동으로 실행되며 코스가 지도 위에 표시됩니다. 카카오맵이 설치되어 있지 않다면 먼저 설치해주세요.', img: '/guide/kakao-3.png' },
+  { n: 4, text: '코스가 표시된 화면에서 우측 하단 [주행시작] 버튼을 탭하면 내비게이션이 시작됩니다. 현재 위치에서 코스를 따라 안내받을 수 있어요.', img: '/guide/kakao-4.png' },
 ]
 
 const GARMIN_PC_STEPS = [
-  { n: 1, text: 'ShapeRun에서 GPX 다운로드', img: '/guide/garmin-pc-1.png' },
-  { n: 2, text: 'Garmin Connect 웹사이트(connect.garmin.com) 접속', img: '/guide/garmin-pc-2.png' },
-  { n: 3, text: '트레이닝 → 코스 → 코스 가져오기 → GPX 파일 업로드', img: '/guide/garmin-pc-3.png' },
-  { n: 4, text: '업로드한 코스에서 "기기로 보내기" 클릭', img: '/guide/garmin-pc-4.png' },
-  { n: 5, text: '워치에서 코스 선택 후 운동 시작', img: '/guide/garmin-pc-5.png' },
+  { n: 1, text: '코스 그리기가 완료되면 하단 바에서 [GPX] 버튼을 클릭하세요. 파일이 자동으로 다운로드됩니다.', img: '/guide/garmin-pc-1.png' },
+  { n: 2, text: 'PC 브라우저에서 connect.garmin.com에 접속하고 로그인하세요.', img: '/guide/garmin-pc-2.png' },
+  { n: 3, text: '상단 메뉴 [트레이닝] → [코스] → 우측 상단 [코스 가져오기]를 클릭한 후 다운로드한 .gpx 파일을 업로드하세요.', img: '/guide/garmin-pc-3.png' },
+  { n: 4, text: '업로드된 코스 페이지에서 [기기로 보내기]를 클릭하세요. Garmin Connect 앱과 동기화되면 자동으로 워치에 전송됩니다.', img: '/guide/garmin-pc-4.png' },
+  { n: 5, text: '가민 워치에서 [코스] 메뉴를 열고 전송된 코스를 선택 후 [시작]을 탭하세요.', img: '/guide/garmin-pc-5.png' },
 ]
 
 const GARMIN_MOBILE_STEPS = [
-  { n: 1, text: 'ShapeRun에서 GPX 다운로드', img: '/guide/garmin-mobile-1.png' },
-  { n: 2, text: 'Garmin Connect 앱 실행', img: '/guide/garmin-mobile-2.png' },
-  { n: 3, text: '코스 메뉴에서 GPX 가져오기', img: '/guide/garmin-mobile-3.png' },
-  { n: 4, text: '워치로 코스 전송', img: '/guide/garmin-mobile-4.png' },
-  { n: 5, text: '워치에서 운동 시작', img: '/guide/garmin-mobile-5.png' },
+  { n: 1, text: '코스 그리기가 완료되면 하단 바에서 [GPX] 버튼을 탭하세요. 파일이 자동으로 다운로드됩니다.', img: '/guide/garmin-mobile-1.png' },
+  { n: 2, text: '스마트폰에서 Garmin Connect 앱을 열고 하단 메뉴에서 [더보기] → [코스]를 탭하세요.', img: '/guide/garmin-mobile-2.png' },
+  { n: 3, text: '우측 상단 [+] 버튼을 탭한 후 [파일에서 가져오기]를 선택하고 다운로드한 .gpx 파일을 선택하세요.', img: '/guide/garmin-mobile-3.png' },
+  { n: 4, text: '가져온 코스를 열고 [기기로 보내기]를 탭하세요. 워치와 블루투스가 연결되어 있으면 자동으로 전송됩니다.', img: '/guide/garmin-mobile-4.png' },
+  { n: 5, text: '가민 워치에서 [코스] 메뉴를 열고 전송된 코스를 선택 후 [시작]을 탭하세요.', img: '/guide/garmin-mobile-5.png' },
 ]
 
 const GALAXY_STEPS = [
-  { n: 1, text: 'GPX 다운로드', img: '/guide/galaxy-1.png' },
-  { n: 2, text: '삼성 헬스 실행', img: '/guide/galaxy-2.png' },
-  { n: 3, text: '운동 → 자전거타기 선택', img: '/guide/galaxy-3.png' },
-  { n: 4, text: '점 3개 → 경로 → 가져오기', img: '/guide/galaxy-4.png' },
-  { n: 5, text: 'GPX 파일 선택', img: '/guide/galaxy-5.png' },
-  { n: 6, text: '라이딩 시작', img: '/guide/galaxy-6.png' },
+  { n: 1, text: '코스 그리기가 완료되면 하단 바에서 [GPX] 버튼을 탭하세요. 파일이 자동으로 다운로드됩니다.', img: '/guide/galaxy-1.png' },
+  { n: 2, text: '스마트폰에서 삼성 헬스 앱을 열고 하단 [운동] 탭을 탭하세요.', img: '/guide/galaxy-2.png' },
+  { n: 3, text: '운동 목록에서 [자전거 타기]를 선택하세요. 현재 삼성 헬스는 자전거 타기 운동에서만 GPX 가져오기를 지원합니다.', img: '/guide/galaxy-3.png' },
+  { n: 4, text: '우측 상단 [⋮] 버튼 → [경로] → 우측 상단 [가져오기]를 탭하세요.', img: '/guide/galaxy-4.png' },
+  { n: 5, text: '다운로드 폴더에서 저장된 .gpx 파일을 선택하면 코스가 불러와집니다.', img: '/guide/galaxy-5.png' },
+  { n: 6, text: '불러온 코스를 선택하고 [시작] 버튼을 탭하면 갤럭시워치에서 코스를 따라 라이딩을 시작할 수 있습니다.', img: '/guide/galaxy-6.png' },
 ]
 
 function StepCard({ n, text, img }: { n: number; text: string; img: string }) {
