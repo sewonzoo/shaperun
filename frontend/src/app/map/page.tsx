@@ -136,9 +136,11 @@ interface DropdownItem {
 function HeaderDropdown({
   trigger,
   items,
+  banner,
 }: {
   trigger: React.ReactNode
   items: DropdownItem[]
+  banner?: React.ReactNode
 }) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
@@ -161,7 +163,8 @@ function HeaderDropdown({
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-44 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-50">
+        <div className={`absolute right-0 top-full mt-2 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-50 ${banner ? 'w-64' : 'w-44'}`}>
+          {banner}
           {items.map(item => (
             <button
               key={item.label}
@@ -231,6 +234,16 @@ export default function MapPage() {
     setAuthUser(null)
     router.push('/')
   }, [router])
+
+  const signInWithKakao = useCallback(() =>
+    supabaseRef.current.auth.signInWithOAuth({
+      provider: 'kakao',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback?next=/map`,
+        scopes: 'profile_nickname profile_image',
+        queryParams: { scope: 'profile_nickname profile_image' },
+      },
+    }), [])
 
   // ── Kakao Maps SDK ────────────────────────────────────────────────────────
   useEffect(() => {
@@ -424,6 +437,20 @@ export default function MapPage() {
               <HeaderDropdown
                 trigger={<span className="text-gray-500 hover:text-gray-700 transition-colors"><IconMenu /></span>}
                 items={guestItems}
+                banner={
+                  <div className="bg-blue-50 px-4 py-3 border-b border-blue-100">
+                    <p className="text-sm text-blue-800 leading-snug mb-2">
+                      코스 저장·피드·관리는 로그인 후 이용 가능해요
+                    </p>
+                    <button
+                      onClick={signInWithKakao}
+                      className="w-full flex items-center justify-center gap-2 py-2 rounded-xl bg-[#FEE500] text-[#191919] text-[13px] font-bold hover:brightness-95 transition-all"
+                    >
+                      <IconKakao />
+                      카카오로 시작하기
+                    </button>
+                  </div>
+                }
               />
             )}
           </div>
@@ -472,7 +499,7 @@ export default function MapPage() {
           <div className="w-full max-w-sm bg-white rounded-3xl shadow-2xl overflow-hidden pointer-events-auto">
 
             {/* Stats row */}
-            <div className="flex items-baseline gap-5 px-6 pt-5 pb-4">
+            <div className="flex items-center justify-around gap-5 px-6 pt-5 pb-4">
               <div>
                 <span className="text-[2.2rem] font-bold tracking-tight leading-none text-gray-900">
                   {totalDistKm.toFixed(2)}

@@ -37,13 +37,37 @@ function LandingInner() {
     })
 
   return (
-    <main className="min-h-screen bg-white flex flex-col items-center justify-center px-6">
+    <main className="relative min-h-screen bg-white flex flex-col items-center justify-center px-6 overflow-hidden">
+
+      {/* Background course SVG */}
+      <svg
+        className="absolute inset-0 w-full h-full opacity-10 pointer-events-none"
+        viewBox="0 0 400 700"
+        preserveAspectRatio="xMidYMid slice"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M80 580 C60 520, 40 460, 60 380 C80 300, 140 260, 180 200 C220 140, 240 100, 200 60 C160 20, 100 30, 80 80 C60 130, 90 180, 130 210 C170 240, 230 250, 270 290 C310 330, 340 390, 330 450 C320 510, 280 550, 240 570 C200 590, 150 590, 120 580 C100 574, 80 580, 80 580 Z"
+          stroke="#3B82F6"
+          strokeWidth="6"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M200 60 C230 30, 290 20, 320 60 C350 100, 340 160, 310 200 C280 240, 240 260, 220 300"
+          stroke="#3B82F6"
+          strokeWidth="4"
+          strokeLinecap="round"
+          strokeDasharray="12 8"
+        />
+      </svg>
 
       {/* Logo */}
       <div className="mb-3">
         <Logo width={140} height={42} />
       </div>
-      <p className="text-[15px] text-gray-400 text-center leading-relaxed mb-14">
+      <p className="text-lg font-semibold text-gray-800 text-center leading-relaxed mb-14">
         내 달리기 코스를 직접 그려보세요
       </p>
 
@@ -72,15 +96,11 @@ function LandingInner() {
         </button>
       </div>
 
-      <p className="text-[11px] text-gray-300 mt-10 text-center leading-relaxed">
-        로그인하면 코스 저장 및 관리가 가능합니다
-      </p>
-
       <a
         href="/landing.html"
         target="_blank"
         rel="noopener noreferrer"
-        className="mt-4 text-[12px] text-blue-400 hover:text-blue-600 transition-colors"
+        className="mt-10 text-[13px] text-blue-600 font-semibold bg-white/70 px-3 py-1 rounded-full hover:bg-white transition-colors"
       >
         서비스 알아보기 →
       </a>
