@@ -9,10 +9,10 @@ type Tab = 'kakao' | 'garmin' | 'galaxy'
 type GarminSub = 'pc' | 'mobile'
 
 const KAKAO_STEPS = [
-  { n: 1, text: '코스 그리기가 완료되면 하단 바에서 [GPX] 버튼을 탭하세요. 파일이 자동으로 다운로드됩니다.', img: '/guide/kakao-1.png' },
-  { n: 2, text: '스마트폰의 [내 파일] 앱을 열고 다운로드 폴더에서 저장된 .gpx 파일을 탭하세요.', img: '/guide/kakao-2.png' },
-  { n: 3, text: 'GPX 파일을 열면 카카오맵이 자동으로 실행되며 코스가 지도 위에 표시됩니다. 카카오맵이 설치되어 있지 않다면 먼저 설치해주세요.', img: '/guide/kakao-3.png' },
-  { n: 4, text: '코스가 표시된 화면에서 우측 하단 [주행시작] 버튼을 탭하면 내비게이션이 시작됩니다. 현재 위치에서 코스를 따라 안내받을 수 있어요.', img: '/guide/kakao-4.png' },
+  { n: 1, text: '코스 그리기가 완료되면 하단 바에서 [GPX] 버튼을 탭하세요. 파일이 자동으로 다운로드됩니다.', img: '/guide/kakao-1.jpg' },
+  { n: 2, text: 'GPX 파일이 다운로드되면 파일을 열고 하단의 [공유] 버튼을 탭하세요.', img: '/guide/kakao-2.jpg' },
+  { n: 3, text: '공유 메뉴에서 [카카오맵]을 탭하면 자동으로 카카오맵이 실행되며 코스가 표시됩니다.', img: '/guide/kakao-3.jpg' },
+  { n: 4, text: '코스가 표시된 화면에서 우측 하단 [주행시작] 버튼을 탭하면 내비게이션이 시작됩니다. 현재 위치에서 코스를 따라 안내받을 수 있어요.', img: '/guide/kakao-4.jpg' },
 ]
 
 const GARMIN_PC_STEPS = [
@@ -24,11 +24,15 @@ const GARMIN_PC_STEPS = [
 ]
 
 const GARMIN_MOBILE_STEPS = [
-  { n: 1, text: '코스 그리기가 완료되면 하단 바에서 [GPX] 버튼을 탭하세요. 파일이 자동으로 다운로드됩니다.', img: '/guide/garmin-mobile-1.png' },
-  { n: 2, text: '스마트폰에서 Garmin Connect 앱을 열고 하단 메뉴에서 [더보기] → [코스]를 탭하세요.', img: '/guide/garmin-mobile-2.png' },
-  { n: 3, text: '우측 상단 [+] 버튼을 탭한 후 [파일에서 가져오기]를 선택하고 다운로드한 .gpx 파일을 선택하세요.', img: '/guide/garmin-mobile-3.png' },
-  { n: 4, text: '가져온 코스를 열고 [기기로 보내기]를 탭하세요. 워치와 블루투스가 연결되어 있으면 자동으로 전송됩니다.', img: '/guide/garmin-mobile-4.png' },
-  { n: 5, text: '가민 워치에서 [코스] 메뉴를 열고 전송된 코스를 선택 후 [시작]을 탭하세요.', img: '/guide/garmin-mobile-5.png' },
+  { n: 1, text: '코스 그리기가 완료되면 하단 바에서 [GPX] 버튼을 탭하세요. 파일이 자동으로 다운로드됩니다.', img: '/guide/garmin-mobile-1.jpg' },
+  { n: 2, text: '다운로드된 GPX 파일을 열고 하단의 [공유] 버튼을 탭하세요.', img: '/guide/garmin-mobile-2.jpg' },
+  { n: 3, text: '공유 메뉴에서 [Garmin Connect]를 선택하세요.', img: '/guide/garmin-mobile-3.jpg' },
+  { n: 4, text: '코스 유형에서 [러닝]을 선택하세요.', img: '/guide/garmin-mobile-4.jpg' },
+  { n: 5, text: '자동으로 코스 미리보기가 생성되면 [저장]을 탭하세요.', img: '/guide/garmin-mobile-5.jpg' },
+  { n: 6, text: '코스 이름을 지정하고 공개/비공개를 설정한 후 [저장]을 탭하세요.', img: '/guide/garmin-mobile-6.jpg' },
+  { n: 7, text: '저장된 코스 화면에서 [전송] 아이콘을 탭하세요.', img: '/guide/garmin-mobile-7.jpg' },
+  { n: 8, text: '호환 장치 목록에서 사용 중인 가민 워치를 선택하세요.', img: '/guide/garmin-mobile-7b.jpg' },
+  { n: 9, text: '워치에서 동기화가 완료되면 코스를 사용할 수 있습니다.', img: '/guide/garmin-mobile-8.jpg' },
 ]
 
 const GALAXY_STEPS = [
@@ -40,9 +44,9 @@ const GALAXY_STEPS = [
   { n: 6, text: '불러온 코스를 선택하고 [시작] 버튼을 탭하면 갤럭시워치에서 코스를 따라 라이딩을 시작할 수 있습니다.', img: '/guide/galaxy-6.png' },
 ]
 
-function StepCard({ n, text, img }: { n: number; text: string; img: string }) {
+function StepCard({ n, text, img, isLast }: { n: number; text: string; img: string; isLast?: boolean }) {
   return (
-    <div className="flex flex-col gap-3">
+    <div className={`flex flex-col gap-3${isLast ? '' : ' pb-6 border-b border-gray-100'}`}>
       <div className="flex items-center gap-3">
         <span className="shrink-0 w-7 h-7 rounded-full bg-blue-600 text-white text-[12px] font-bold flex items-center justify-center">
           {n}
@@ -59,19 +63,21 @@ function ImageSlot({ src, alt }: { src: string; alt: string }) {
 
   if (error) {
     return (
-      <div className="w-full h-44 bg-gray-100 rounded-2xl flex items-center justify-center border border-dashed border-gray-200">
+      <div className="w-full bg-gray-100 rounded-xl flex items-center justify-center border border-dashed border-gray-200 py-10">
         <span className="text-[12px] text-gray-400">이미지 준비 중</span>
       </div>
     )
   }
 
   return (
-    <div className="w-full h-44 bg-gray-100 rounded-2xl overflow-hidden relative">
+    <div className="w-full rounded-xl overflow-hidden border-2 border-gray-800">
       <Image
         src={src}
         alt={alt}
-        fill
-        className="object-contain"
+        width={0}
+        height={0}
+        sizes="100vw"
+        className="w-full h-auto"
         onError={() => setError(true)}
       />
     </div>
@@ -87,11 +93,6 @@ const TABS: { id: Tab; label: string }[] = [
 export default function GuidePage() {
   const [tab, setTab] = useState<Tab>('kakao')
   const [garminSub, setGarminSub] = useState<GarminSub>('mobile')
-
-  const steps =
-    tab === 'kakao'  ? KAKAO_STEPS :
-    tab === 'garmin' ? (garminSub === 'pc' ? GARMIN_PC_STEPS : GARMIN_MOBILE_STEPS) :
-    GALAXY_STEPS
 
   return (
     <main className="min-h-screen bg-gray-50" style={{ fontFamily: 'Pretendard, sans-serif' }}>
@@ -168,9 +169,24 @@ export default function GuidePage() {
         )}
 
         {/* Steps */}
-        <div className="space-y-6">
-          {steps.map(s => (
-            <StepCard key={s.n} n={s.n} text={s.text} img={s.img} />
+        <div style={{ display: tab === 'kakao' ? 'block' : 'none' }} className="space-y-6">
+          {KAKAO_STEPS.map((s, idx) => (
+            <StepCard key={s.n} n={s.n} text={s.text} img={s.img} isLast={idx === KAKAO_STEPS.length - 1} />
+          ))}
+        </div>
+        <div style={{ display: tab === 'garmin' && garminSub === 'mobile' ? 'block' : 'none' }} className="space-y-6">
+          {GARMIN_MOBILE_STEPS.map((s, idx) => (
+            <StepCard key={s.n} n={s.n} text={s.text} img={s.img} isLast={idx === GARMIN_MOBILE_STEPS.length - 1} />
+          ))}
+        </div>
+        <div style={{ display: tab === 'garmin' && garminSub === 'pc' ? 'block' : 'none' }} className="space-y-6">
+          {GARMIN_PC_STEPS.map((s, idx) => (
+            <StepCard key={s.n} n={s.n} text={s.text} img={s.img} isLast={idx === GARMIN_PC_STEPS.length - 1} />
+          ))}
+        </div>
+        <div style={{ display: tab === 'galaxy' ? 'block' : 'none' }} className="space-y-6">
+          {GALAXY_STEPS.map((s, idx) => (
+            <StepCard key={s.n} n={s.n} text={s.text} img={s.img} isLast={idx === GALAXY_STEPS.length - 1} />
           ))}
         </div>
 
