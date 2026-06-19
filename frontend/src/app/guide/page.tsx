@@ -16,11 +16,11 @@ const KAKAO_STEPS = [
 ]
 
 const GARMIN_PC_STEPS = [
-  { n: 1, text: '코스 그리기가 완료되면 하단 바에서 [GPX] 버튼을 클릭하세요. 파일이 자동으로 다운로드됩니다.', img: '/guide/garmin-pc-1.png' },
-  { n: 2, text: 'PC 브라우저에서 connect.garmin.com에 접속하고 로그인하세요.', img: '/guide/garmin-pc-2.png' },
-  { n: 3, text: '상단 메뉴 [트레이닝] → [코스] → 우측 상단 [코스 가져오기]를 클릭한 후 다운로드한 .gpx 파일을 업로드하세요.', img: '/guide/garmin-pc-3.png' },
-  { n: 4, text: '업로드된 코스 페이지에서 [기기로 보내기]를 클릭하세요. Garmin Connect 앱과 동기화되면 자동으로 워치에 전송됩니다.', img: '/guide/garmin-pc-4.png' },
-  { n: 5, text: '가민 워치에서 [코스] 메뉴를 열고 전송된 코스를 선택 후 [시작]을 탭하세요.', img: '/guide/garmin-pc-5.png' },
+  { n: 1, text: 'ShapeRun에서 코스 작성이 완료되면 하단 바에서 [GPX] 버튼을 클릭하세요. 파일이 자동으로 다운로드됩니다.', img: '/guide/garmin-pc-1.jpg' },
+  { n: 2, text: 'Garmin Connect 웹사이트(connect.garmin.com)에 로그인 후, 왼쪽 메뉴에서 [트레이닝 및 플래닝]을 클릭하세요.', img: '/guide/garmin-pc-2.jpg' },
+  { n: 3, text: '펼쳐진 메뉴에서 [코스]를 클릭하세요.', img: '/guide/garmin-pc-3.jpg' },
+  { n: 4, text: '코스 페이지 상단의 [가져오기] 버튼을 클릭하세요.', img: '/guide/garmin-pc-4.jpg' },
+  { n: 5, text: '다운로드한 GPX 파일을 끌어다 놓거나 찾아보기로 선택한 후 [시작하기]를 클릭하세요.', img: '/guide/garmin-pc-5.jpg' },
 ]
 
 const GARMIN_MOBILE_STEPS = [
