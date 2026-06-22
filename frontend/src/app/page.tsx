@@ -100,7 +100,7 @@ function LandingInner() {
         href="/landing.html"
         target="_blank"
         rel="noopener noreferrer"
-        className="mt-10 text-[13px] text-blue-600 font-semibold bg-white/70 px-3 py-1 rounded-full hover:bg-white transition-colors"
+        className="mt-10 text-[15px] text-blue-600 font-semibold bg-white/70 px-3 py-1 rounded-full hover:bg-white transition-colors"
       >
         서비스 알아보기 →
       </a>
