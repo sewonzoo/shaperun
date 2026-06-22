@@ -198,6 +198,7 @@ export default function MapView({
         setIsLocating(true)
         navigator.geolocation?.getCurrentPosition(
           ({ coords }) => {
+            if (!mapRef.current) return
             const { longitude: lng, latitude: lat } = coords
             if (locationMarkerRef.current) {
               locationMarkerRef.current.setLngLat([lng, lat])
@@ -208,7 +209,7 @@ export default function MapView({
             map.flyTo({ center: [lng, lat], zoom: 15, duration: 1200 })
             setIsLocating(false)
           },
-          () => setIsLocating(false),
+          () => { if (mapRef.current) setIsLocating(false) },
           { timeout: 8000, enableHighAccuracy: true },
         )
       }
