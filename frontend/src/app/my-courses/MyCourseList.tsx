@@ -84,6 +84,7 @@ interface Props {
 
 function CourseSection({
   title,
+  accentClass,
   courses,
   emptyMessage,
   emptySubMessage,
@@ -94,6 +95,7 @@ function CourseSection({
   onView,
 }: {
   title: string
+  accentClass: string
   courses: Course[]
   emptyMessage: string
   emptySubMessage: string
@@ -105,9 +107,10 @@ function CourseSection({
 }) {
   return (
     <section>
-      <div className="flex items-center gap-2 mb-3">
-        <h2 className="text-[13px] font-bold text-gray-700">{title}</h2>
-        <span className="text-[11px] text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full font-semibold">
+      <div className="flex items-center gap-3 mb-4 pb-3 border-b border-gray-200">
+        <span className={`w-1 h-5 rounded-full shrink-0 ${accentClass}`} />
+        <h2 className="text-[15px] font-bold text-gray-800">{title}</h2>
+        <span className="text-[11px] text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full font-bold">
           {courses.length}
         </span>
       </div>
@@ -294,7 +297,7 @@ export default function MyCourseList({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
 
       {/* Profile card */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
@@ -382,6 +385,7 @@ export default function MyCourseList({
       {/* 내가 만든 코스 */}
       <CourseSection
         title="내가 만든 코스"
+        accentClass="bg-blue-500"
         courses={originalCourses}
         emptyMessage="아직 만든 코스가 없어요"
         emptySubMessage="지도에서 코스를 그려보세요"
@@ -392,9 +396,12 @@ export default function MyCourseList({
         onView={handleView}
       />
 
+      <hr className="border-gray-200" />
+
       {/* 다운로드한 코스 */}
       <CourseSection
         title="다운로드한 코스"
+        accentClass="bg-emerald-500"
         courses={downloadedCourses}
         emptyMessage="다운로드한 코스가 없어요"
         emptySubMessage="피드에서 다른 러너의 코스를 저장해보세요"
