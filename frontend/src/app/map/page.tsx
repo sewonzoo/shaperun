@@ -227,7 +227,6 @@ export default function MapPage() {
 
   const dismissOnboarding = useCallback(() => {
     setOnboardingVisible(false)
-    localStorage.setItem('map_onboarding_shown', '1')
     setTimeout(() => setOnboardingMounted(false), 500)
   }, [])
 
@@ -263,9 +262,8 @@ export default function MapPage() {
     document.head.appendChild(script)
   }, [])
 
-  // ── Onboarding tooltip (first visit) ─────────────────────────────────────
+  // ── Onboarding tooltip ───────────────────────────────────────────────────
   useEffect(() => {
-    if (localStorage.getItem('map_onboarding_shown')) return
     setOnboardingMounted(true)
     const rafId = requestAnimationFrame(() =>
       requestAnimationFrame(() => setOnboardingVisible(true))
