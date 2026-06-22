@@ -405,7 +405,7 @@ export default function MapPage() {
               onKeyDown={e => { if (e.key === 'Escape') { setSearchQuery(''); setGeoResults([]) } }}
               onBlur={() => setTimeout(() => setGeoResults([]), 200)}
               placeholder="장소 검색"
-              className="flex-1 min-w-0 text-[13px] bg-transparent outline-none text-gray-700 placeholder:text-gray-400"
+              className="flex-1 min-w-0 text-base bg-transparent outline-none text-gray-700 placeholder:text-gray-400"
             />
             {searchQuery && (
               <button
