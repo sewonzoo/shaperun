@@ -198,8 +198,10 @@ export default function MapPage() {
   const [geoResults,    setGeoResults]    = useState<GeoResult[]>([])
   const [flyToTarget,   setFlyToTarget]   = useState<{ lng: number; lat: number; id: number } | null>(null)
   const [authUser,      setAuthUser]      = useState<AuthUser | null>(null)
-  const [showSaveModal,   setShowSaveModal]   = useState(false)
-  const [savedToast,    setSavedToast]    = useState(false)
+  const [showSaveModal,      setShowSaveModal]      = useState(false)
+  const [savedToast,         setSavedToast]         = useState(false)
+  const [onboardingMounted,  setOnboardingMounted]  = useState(false)
+  const [onboardingVisible,  setOnboardingVisible]  = useState(false)
   const searchInputRef = useRef<HTMLInputElement>(null)
   const supabaseRef    = useRef(createClient())
 
@@ -221,6 +223,12 @@ export default function MapPage() {
       }
     })
     return () => subscription.unsubscribe()
+  }, [])
+
+  const dismissOnboarding = useCallback(() => {
+    setOnboardingVisible(false)
+    localStorage.setItem('map_onboarding_shown', '1')
+    setTimeout(() => setOnboardingMounted(false), 500)
   }, [])
 
   const handleSaved = useCallback(() => {
@@ -254,6 +262,17 @@ export default function MapPage() {
     script.async = true
     document.head.appendChild(script)
   }, [])
+
+  // ── Onboarding tooltip (first visit) ─────────────────────────────────────
+  useEffect(() => {
+    if (localStorage.getItem('map_onboarding_shown')) return
+    setOnboardingMounted(true)
+    const rafId = requestAnimationFrame(() =>
+      requestAnimationFrame(() => setOnboardingVisible(true))
+    )
+    const timer = setTimeout(dismissOnboarding, 3000)
+    return () => { cancelAnimationFrame(rafId); clearTimeout(timer) }
+  }, [dismissOnboarding])
 
   // ── URL waypoints restore ─────────────────────────────────────────────────
   useEffect(() => {
@@ -580,6 +599,24 @@ export default function MapPage() {
               onClick={() => router.push('/my-courses')}
             >
               피드 보기
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Onboarding tooltip ──────────────────────────────────────────── */}
+      {onboardingMounted && (
+        <div
+          className={`absolute bottom-24 left-1/2 -translate-x-1/2 z-20 transition-opacity duration-500 ${onboardingVisible ? 'opacity-100' : 'opacity-0'}`}
+        >
+          <div className="flex items-center gap-3 bg-gray-900/90 text-white text-[14px] font-medium pl-4 pr-2 py-2.5 rounded-full shadow-xl backdrop-blur-sm whitespace-nowrap">
+            출발지점을 눌러 코스를 그려보세요! 🏃
+            <button
+              onClick={dismissOnboarding}
+              className="flex items-center justify-center w-6 h-6 rounded-full bg-white/20 hover:bg-white/30 transition-colors text-white text-lg leading-none"
+              aria-label="닫기"
+            >
+              ×
             </button>
           </div>
         </div>
