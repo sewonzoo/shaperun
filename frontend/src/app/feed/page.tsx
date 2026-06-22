@@ -41,6 +41,18 @@ function IconCheck() {
   )
 }
 
+const RANK_CARD_CLASS = [
+  'relative bg-white rounded-2xl shadow-sm overflow-hidden border-2 border-yellow-400',
+  'relative bg-white rounded-2xl shadow-sm overflow-hidden border-2 border-gray-300',
+  'relative bg-white rounded-2xl shadow-sm overflow-hidden border-2 border-amber-600',
+] as const
+
+function RankBadge({ idx }: { idx: 0 | 1 | 2 }) {
+  if (idx === 0) return <span className="absolute top-2 left-2 z-20 bg-yellow-400 text-yellow-900 text-[13px] px-1.5 py-0.5 rounded-lg leading-none font-bold">👑</span>
+  if (idx === 1) return <span className="absolute top-2 left-2 z-20 bg-gray-300 text-gray-600 text-[13px] px-1.5 py-0.5 rounded-lg leading-none font-bold">🥈</span>
+  return <span className="absolute top-2 left-2 z-20 bg-amber-600 text-white text-[13px] px-1.5 py-0.5 rounded-lg leading-none font-bold">🥉</span>
+}
+
 const PERIODS: { value: PeriodType; label: string }[] = [
   { value: '1d', label: '오늘' },
   { value: '1w', label: '이번 주' },
@@ -189,11 +201,14 @@ export default function FeedPage() {
           </div>
         ) : (
           <div className="space-y-3">
-            {courses.map(course => (
+            {courses.map((course, idx) => {
+              const rankIdx = sort === 'popular' && idx < 3 ? idx as 0 | 1 | 2 : null
+              return (
               <div
                 key={course.id}
-                className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
+                className={rankIdx !== null ? RANK_CARD_CLASS[rankIdx] : 'relative bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100'}
               >
+                {rankIdx !== null && <RankBadge idx={rankIdx} />}
                 <div className="p-3 flex gap-3">
                   {/* Route preview */}
                   <CoursePreviewSVG segments={course.segments ?? []} size={80} />
@@ -248,7 +263,7 @@ export default function FeedPage() {
                   </div>
                 </div>
               </div>
-            ))}
+            )})}
           </div>
         )}
 
