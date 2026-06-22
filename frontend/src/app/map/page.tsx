@@ -270,7 +270,7 @@ export default function MapPage() {
     const rafId = requestAnimationFrame(() =>
       requestAnimationFrame(() => setOnboardingVisible(true))
     )
-    const timer = setTimeout(dismissOnboarding, 3000)
+    const timer = setTimeout(dismissOnboarding, 5000)
     return () => { cancelAnimationFrame(rafId); clearTimeout(timer) }
   }, [dismissOnboarding])
 
