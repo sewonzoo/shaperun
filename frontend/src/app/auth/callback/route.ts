@@ -16,7 +16,6 @@ export async function GET(request: Request) {
         cookies: {
           getAll() { return cookieStore.getAll() },
           setAll(cookiesToSet) {
-            console.log('setting cookies:', cookiesToSet.map(c => c.name))
             cookiesToSet.forEach(({ name, value, options }) =>
               cookieStore.set(name, value, options)
             )
@@ -24,9 +23,7 @@ export async function GET(request: Request) {
         },
       }
     )
-    const { data, error } = await supabase.auth.exchangeCodeForSession(code)
-    console.log('callback data:', JSON.stringify(data))
-    console.log('callback error:', JSON.stringify(error))
+    await supabase.auth.exchangeCodeForSession(code)
   }
 
   return NextResponse.redirect(new URL(next ?? '/map', requestUrl.origin))
