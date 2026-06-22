@@ -36,12 +36,14 @@ const GARMIN_MOBILE_STEPS = [
 ]
 
 const GALAXY_STEPS = [
-  { n: 1, text: '코스 그리기가 완료되면 하단 바에서 [GPX] 버튼을 탭하세요. 파일이 자동으로 다운로드됩니다.', img: '/guide/galaxy-1.png' },
-  { n: 2, text: '스마트폰에서 삼성 헬스 앱을 열고 하단 [운동] 탭을 탭하세요.', img: '/guide/galaxy-2.png' },
-  { n: 3, text: '운동 목록에서 [자전거 타기]를 선택하세요. 현재 삼성 헬스는 자전거 타기 운동에서만 GPX 가져오기를 지원합니다.', img: '/guide/galaxy-3.png' },
-  { n: 4, text: '우측 상단 [⋮] 버튼 → [경로] → 우측 상단 [가져오기]를 탭하세요.', img: '/guide/galaxy-4.png' },
-  { n: 5, text: '다운로드 폴더에서 저장된 .gpx 파일을 선택하면 코스가 불러와집니다.', img: '/guide/galaxy-5.png' },
-  { n: 6, text: '불러온 코스를 선택하고 [시작] 버튼을 탭하면 갤럭시워치에서 코스를 따라 라이딩을 시작할 수 있습니다.', img: '/guide/galaxy-6.png' },
+  { n: 1, text: 'ShapeRun에서 코스 작성이 완료되면 하단 바에서 [GPX] 버튼을 탭하세요. 파일이 자동으로 다운로드됩니다.', img: '/guide/galaxy-1.jpg' },
+  { n: 2, text: 'Samsung Health 앱 홈 화면에서 [걷기]를 탭하세요.', img: '/guide/galaxy-2.jpg' },
+  { n: 3, text: '위치 정보 접근 권한 요청이 뜨면 [앱 사용 중에만 허용]을 탭하세요.', img: '/guide/galaxy-3.jpg' },
+  { n: 4, text: '우측 상단 메뉴(⋮)를 탭해 [경로]를 선택하세요.', img: '/guide/galaxy-4.jpg' },
+  { n: 5, text: '경로 추가 화면에서 [내 파일에서 가져오기]를 선택하세요.', img: '/guide/galaxy-5.jpg' },
+  { n: 6, text: '연결 앱 목록에서 [삼성 헬스]를 선택하세요.', img: '/guide/galaxy-6.jpg' },
+  { n: 7, text: '운동 유형 선택에서 [걷기]를 확인하세요.', img: '/guide/galaxy-7.jpg' },
+  { n: 8, text: '경로 이름과 운동 유형을 확인한 후 [저장]을 탭하세요.', img: '/guide/galaxy-8.jpg' },
 ]
 
 function StepCard({ n, text, img, isLast }: { n: number; text: string; img: string; isLast?: boolean }) {
@@ -157,16 +159,6 @@ export default function GuidePage() {
           </div>
         )}
 
-        {/* Galaxy running notice */}
-        {tab === 'galaxy' && (
-          <div className="mb-5 bg-amber-50 border border-amber-100 rounded-2xl px-4 py-3 flex items-start gap-2.5">
-            <span className="text-amber-500 text-base leading-none mt-0.5">⚠️</span>
-            <p className="text-[12px] text-amber-700 leading-relaxed">
-              갤럭시워치의 GPX 경로 기능은 <strong>자전거타기(라이딩) 전용</strong>입니다.
-              러닝 모드에서는 경로 가져오기가 지원되지 않습니다.
-            </p>
-          </div>
-        )}
 
         {/* Steps */}
         <div style={{ display: tab === 'kakao' ? 'block' : 'none' }} className="space-y-6">
