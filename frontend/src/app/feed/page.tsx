@@ -41,6 +41,16 @@ function IconCheck() {
   )
 }
 
+function IconMap() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
+      <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6" />
+      <line x1="8" y1="2" x2="8" y2="18" />
+      <line x1="16" y1="6" x2="16" y2="22" />
+    </svg>
+  )
+}
+
 const RANK_CARD_CLASS = [
   'relative bg-white rounded-2xl shadow-sm overflow-hidden border-2 border-yellow-400',
   'relative bg-white rounded-2xl shadow-sm overflow-hidden border-2 border-gray-300',
@@ -90,6 +100,16 @@ export default function FeedPage() {
   }, [sort, period])
 
   useEffect(() => { fetchCourses() }, [fetchCourses])
+
+  const handleView = (course: Course) => {
+    type LngLat = { lng: number; lat: number }
+    const waypoints = (course.waypoints ?? []) as unknown as LngLat[]
+    if (!waypoints.length) return
+    const wpsStr = waypoints.map(w => `${w.lng.toFixed(6)},${w.lat.toFixed(6)}`).join('_')
+    const params = new URLSearchParams({ wps: wpsStr })
+    if (course.loop_closed) params.set('loop', '1')
+    router.push(`/map?${params}`)
+  }
 
   const handleDownload = async (courseId: string) => {
     if (!userId) {
@@ -261,6 +281,16 @@ export default function FeedPage() {
                       </span>
                     </div>
                   </div>
+                </div>
+                {/* Bottom: view on map */}
+                <div className="border-t border-gray-50">
+                  <button
+                    onClick={() => handleView(course)}
+                    className="w-full flex items-center justify-center gap-1.5 py-2.5 text-[12px] font-semibold text-gray-500 hover:bg-gray-50 transition-colors"
+                  >
+                    <IconMap />
+                    지도에서 보기
+                  </button>
                 </div>
               </div>
             )})}

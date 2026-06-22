@@ -124,7 +124,7 @@ export async function listPublicCourses(sort: SortType, period?: PeriodType): Pr
 
   let query = client
     .from('courses')
-    .select('id, title, distance_m, duration_s, loop_closed, download_count, creator_name, region_name, created_at, segments')
+    .select('id, title, distance_m, duration_s, loop_closed, download_count, creator_name, region_name, created_at, segments, waypoints')
     .eq('is_public', true)
     .is('original_course_id', null)
 
