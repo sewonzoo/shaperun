@@ -195,9 +195,21 @@ export default function MapView({
       })
       setMapLoaded(true)
       if (!initialWaypointsRef.current?.length) {
+        setIsLocating(true)
         navigator.geolocation?.getCurrentPosition(
-          ({ coords }) => map.flyTo({ center: [coords.longitude, coords.latitude], zoom: 15, duration: 1200 }),
-          () => {}, { timeout: 8000 },
+          ({ coords }) => {
+            const { longitude: lng, latitude: lat } = coords
+            if (locationMarkerRef.current) {
+              locationMarkerRef.current.setLngLat([lng, lat])
+            } else {
+              locationMarkerRef.current = new mapboxgl.Marker({ element: makeLocateDotEl(), anchor: 'center' })
+                .setLngLat([lng, lat]).addTo(map)
+            }
+            map.flyTo({ center: [lng, lat], zoom: 15, duration: 1200 })
+            setIsLocating(false)
+          },
+          () => setIsLocating(false),
+          { timeout: 8000, enableHighAccuracy: true },
         )
       }
     })
