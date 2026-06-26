@@ -194,7 +194,9 @@ export default function MapView({
         onCenterChangeRef.current?.({ lng, lat })
       })
       setMapLoaded(true)
-      if (!initialWaypointsRef.current?.length) {
+      const urlParams = new URLSearchParams(window.location.search)
+      const hasCourseParams = urlParams.has('wps') || urlParams.has('courseId') || urlParams.has('id') || urlParams.has('shared')
+      if (!initialWaypointsRef.current?.length && !hasCourseParams) {
         setIsLocating(true)
         navigator.geolocation?.getCurrentPosition(
           ({ coords }) => {
