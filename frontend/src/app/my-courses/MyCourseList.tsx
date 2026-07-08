@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { deleteCourse, toggleCoursePublic } from '@/lib/courses'
 import type { Course } from '@/lib/courses'
+import { shareCourse } from '@/lib/kakaoShare'
 import CoursePreviewSVG from '@/components/course/CoursePreviewSVG'
 import Link from 'next/link'
 
@@ -40,6 +41,18 @@ function IconMap() {
       <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6" />
       <line x1="8" y1="2" x2="8" y2="18" />
       <line x1="16" y1="6" x2="16" y2="22" />
+    </svg>
+  )
+}
+
+function IconShare() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+      <circle cx="18" cy="5" r="3" />
+      <circle cx="6" cy="12" r="3" />
+      <circle cx="18" cy="19" r="3" />
+      <line x1="8.6" y1="10.5" x2="15.4" y2="6.5" />
+      <line x1="8.6" y1="13.5" x2="15.4" y2="17.5" />
     </svg>
   )
 }
@@ -93,6 +106,7 @@ function CourseSection({
   onDelete,
   onToggle,
   onView,
+  onShare,
 }: {
   title: string
   accentClass: string
@@ -104,6 +118,7 @@ function CourseSection({
   onDelete: (id: string) => void
   onToggle: (id: string, current: boolean) => void
   onView: (course: Course) => void
+  onShare: (course: Course) => void
 }) {
   return (
     <section>
@@ -183,6 +198,14 @@ function CourseSection({
                 >
                   <IconMap />
                   지도에서 보기
+                </button>
+                <div className="w-px bg-gray-50" />
+                <button
+                  onClick={() => onShare(course)}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-[12px] font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
+                >
+                  <IconShare />
+                  공유
                 </button>
                 <div className="w-px bg-gray-50" />
                 <button
@@ -296,6 +319,14 @@ export default function MyCourseList({
     router.push(`/map?${params}`)
   }
 
+  const handleShare = (course: Course) => {
+    if (!course.is_public) {
+      alert('공유하려면 먼저 코스를 공개로 설정해주세요')
+      return
+    }
+    shareCourse({ courseId: course.id, title: course.title, distanceM: course.distance_m })
+  }
+
   return (
     <div className="space-y-8">
 
@@ -394,6 +425,7 @@ export default function MyCourseList({
         onDelete={handleDelete}
         onToggle={handleTogglePublic}
         onView={handleView}
+        onShare={handleShare}
       />
 
       <hr className="border-gray-200" />
@@ -410,6 +442,7 @@ export default function MyCourseList({
         onDelete={handleDelete}
         onToggle={handleTogglePublic}
         onView={handleView}
+        onShare={handleShare}
       />
 
     </div>

@@ -8,6 +8,8 @@ import type { LngLat, RouteSegment } from '@/lib/api'
 import type { NavInfo } from '@/lib/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { getRegionName } from '@/lib/courses'
+import type { Course } from '@/lib/courses'
+import { shareCourse } from '@/lib/kakaoShare'
 import SaveCourseModal from '@/components/course/SaveCourseModal'
 import Logo from '@/components/ui/Logo'
 
@@ -200,6 +202,7 @@ export default function MapPage() {
   const [authUser,      setAuthUser]      = useState<AuthUser | null>(null)
   const [showSaveModal,      setShowSaveModal]      = useState(false)
   const [savedToast,         setSavedToast]         = useState(false)
+  const [savedCourse,        setSavedCourse]        = useState<Course | null>(null)
   const [onboardingMounted,  setOnboardingMounted]  = useState(false)
   const [onboardingVisible,  setOnboardingVisible]  = useState(false)
   const searchInputRef = useRef<HTMLInputElement>(null)
@@ -230,11 +233,17 @@ export default function MapPage() {
     setTimeout(() => setOnboardingMounted(false), 500)
   }, [])
 
-  const handleSaved = useCallback(() => {
+  const handleSaved = useCallback((course: Course) => {
     setShowSaveModal(false)
+    setSavedCourse(course)
     setSavedToast(true)
     setTimeout(() => setSavedToast(false), 3000)
   }, [])
+
+  const handleShareSavedCourse = useCallback(() => {
+    if (!savedCourse) return
+    shareCourse({ courseId: savedCourse.id, title: savedCourse.title, distanceM: savedCourse.distance_m })
+  }, [savedCourse])
 
   const handleSignOut = useCallback(async () => {
     await supabaseRef.current.auth.signOut()
@@ -592,6 +601,14 @@ export default function MapPage() {
         <div className="absolute bottom-52 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
           <div className="flex items-center gap-3 bg-gray-900/90 text-white text-sm font-medium pl-4 pr-2 py-2 rounded-full shadow-xl backdrop-blur-sm whitespace-nowrap">
             코스가 저장됐어요
+            {savedCourse?.is_public && (
+              <button
+                className="pointer-events-auto bg-white/20 hover:bg-white/30 text-white text-[12px] font-semibold px-3 py-1 rounded-full transition-colors"
+                onClick={handleShareSavedCourse}
+              >
+                공유
+              </button>
+            )}
             <button
               className="pointer-events-auto bg-white/20 hover:bg-white/30 text-white text-[12px] font-semibold px-3 py-1 rounded-full transition-colors"
               onClick={() => router.push('/my-courses')}

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { saveCourse } from '@/lib/courses'
+import type { Course } from '@/lib/courses'
 import type { LngLat, RouteSegment } from '@/lib/api'
 
 interface Props {
@@ -9,7 +10,7 @@ interface Props {
   segments: RouteSegment[]
   loopClosed: boolean
   onClose: () => void
-  onSaved: () => void
+  onSaved: (course: Course) => void
 }
 
 function defaultTitle(segments: RouteSegment[]): string {
@@ -32,8 +33,8 @@ export default function SaveCourseModal({ waypoints, segments, loopClosed, onClo
     setSaving(true)
     setError(null)
     try {
-      await saveCourse({ title: t, waypoints, segments, loop_closed: loopClosed, is_public: isPublic })
-      onSaved()
+      const course = await saveCourse({ title: t, waypoints, segments, loop_closed: loopClosed, is_public: isPublic })
+      onSaved(course)
     } catch {
       setError('저장에 실패했어요. 다시 시도해주세요.')
       setSaving(false)
