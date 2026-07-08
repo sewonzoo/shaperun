@@ -206,8 +206,10 @@ export default function MapPage() {
   const [savedCourse,        setSavedCourse]        = useState<Course | null>(null)
   const [onboardingMounted,  setOnboardingMounted]  = useState(false)
   const [onboardingVisible,  setOnboardingVisible]  = useState(false)
+  const [resettingView,      setResettingView]      = useState(false)
   const searchInputRef = useRef<HTMLInputElement>(null)
   const supabaseRef    = useRef(createClient())
+  const resetViewRequestIdRef = useRef(0)
 
   // ── Auth state ────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -348,7 +350,30 @@ export default function MapPage() {
   }, [])
 
   const handleResetView = useCallback(() => {
-    setResetViewTrigger(t => t + 1)
+    // 클릭마다 요청 ID를 증가시켜, 늦게 도착한 이전 클릭의 응답이
+    // 최신 클릭의 결과를 덮어쓰지 않도록 매칭한다.
+    const requestId = ++resetViewRequestIdRef.current
+    setResettingView(true)
+
+    if (!navigator.geolocation) {
+      setResettingView(false)
+      setResetViewTrigger(t => t + 1)
+      return
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      ({ coords }) => {
+        if (resetViewRequestIdRef.current !== requestId) return // 이미 새 요청으로 대체됨
+        setResettingView(false)
+        setFlyToTarget({ lng: coords.longitude, lat: coords.latitude, id: Date.now() })
+      },
+      () => {
+        if (resetViewRequestIdRef.current !== requestId) return // 이미 새 요청으로 대체됨
+        setResettingView(false)
+        setResetViewTrigger(t => t + 1)
+      },
+      { timeout: 8000, enableHighAccuracy: true },
+    )
   }, [])
 
   const stopNav = useCallback(() => { setIsNavigating(false); setNavInfo(null) }, [])
@@ -428,11 +453,17 @@ export default function MapPage() {
           <div className="flex items-center gap-2.5 bg-white/95 backdrop-blur-md rounded-full shadow-lg px-4 py-2.5">
             <button
               onClick={handleResetView}
-              aria-label="지도를 초기 위치로 이동"
-              title="처음 화면으로"
-              className="shrink-0 cursor-pointer"
+              disabled={resettingView}
+              aria-label="현재 위치로 지도 이동"
+              title="현재 위치로 이동"
+              className="relative shrink-0 cursor-pointer disabled:cursor-wait"
             >
               <Logo width={110} height={33} />
+              {resettingView && (
+                <span className="absolute inset-0 flex items-center justify-center bg-white/70 rounded-md">
+                  <span className="w-3.5 h-3.5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                </span>
+              )}
             </button>
             <span className="w-px h-4 bg-gray-200 shrink-0" />
             <IconSearch />
