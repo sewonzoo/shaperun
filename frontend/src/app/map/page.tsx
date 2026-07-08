@@ -191,6 +191,7 @@ export default function MapPage() {
   const [resetTrigger,     setResetTrigger]     = useState(0)
   const [undoTrigger,      setUndoTrigger]      = useState(0)
   const [closeLoopTrigger, setCloseLoopTrigger] = useState(0)
+  const [resetViewTrigger, setResetViewTrigger] = useState(0)
   const [isNavigating,  setIsNavigating]  = useState(false)
   const [navInfo,       setNavInfo]       = useState<NavInfo | null>(null)
   const [sharing,       setSharing]       = useState(false)
@@ -346,6 +347,10 @@ export default function MapPage() {
     setNavInfo(null)
   }, [])
 
+  const handleResetView = useCallback(() => {
+    setResetViewTrigger(t => t + 1)
+  }, [])
+
   const stopNav = useCallback(() => { setIsNavigating(false); setNavInfo(null) }, [])
 
   const handleKakaoShare = useCallback(async () => {
@@ -414,13 +419,21 @@ export default function MapPage() {
         initialWaypoints={initialWaypoints}
         initialLoop={initialLoop}
         flyToTarget={flyToTarget}
+        resetViewTrigger={resetViewTrigger}
       />
 
       {/* ── Header pill + search ────────────────────────────────────────── */}
       <div className="absolute top-4 left-0 right-0 z-30 px-3 flex justify-center pointer-events-none">
         <div className="relative w-full max-w-md pointer-events-auto">
           <div className="flex items-center gap-2.5 bg-white/95 backdrop-blur-md rounded-full shadow-lg px-4 py-2.5">
-            <Logo width={110} height={33} />
+            <button
+              onClick={handleResetView}
+              aria-label="지도를 초기 위치로 이동"
+              title="처음 화면으로"
+              className="shrink-0 cursor-pointer"
+            >
+              <Logo width={110} height={33} />
+            </button>
             <span className="w-px h-4 bg-gray-200 shrink-0" />
             <IconSearch />
             <input

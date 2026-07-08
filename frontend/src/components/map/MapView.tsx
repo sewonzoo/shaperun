@@ -23,6 +23,7 @@ interface Props {
   initialWaypoints?: LngLat[]
   initialLoop?: boolean
   flyToTarget?: { lng: number; lat: number; id: number } | null
+  resetViewTrigger?: number
   onCenterChange?: (center: { lng: number; lat: number }) => void
 }
 
@@ -123,7 +124,7 @@ function IconLocate() {
 export default function MapView({
   onRouteChange, onNavUpdate,
   resetTrigger, undoTrigger, closeLoopTrigger, isNavigating,
-  initialWaypoints, initialLoop, flyToTarget, onCenterChange,
+  initialWaypoints, initialLoop, flyToTarget, resetViewTrigger, onCenterChange,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef       = useRef<mapboxgl.Map | null>(null)
@@ -398,6 +399,12 @@ export default function MapView({
     if (!flyToTarget || !mapRef.current) return
     mapRef.current.flyTo({ center: [flyToTarget.lng, flyToTarget.lat], zoom: 15, duration: 900 })
   }, [flyToTarget])
+
+  // ── Reset view to default center/zoom (logo click) ─────────────────────────
+  useEffect(() => {
+    if (!resetViewTrigger || !mapRef.current) return
+    mapRef.current.flyTo({ center: DEFAULT_CENTER, zoom: DEFAULT_ZOOM, duration: 900 })
+  }, [resetViewTrigger])
 
   // ── Restore route from shared URL ─────────────────────────────────────────
   useEffect(() => {
