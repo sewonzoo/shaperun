@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import type { Course } from '@/lib/courses'
-import { SITE_URL } from '@/lib/site'
+import { SITE_URL, ogImageUrl } from '@/lib/site'
 import CoursePreviewSVG from '@/components/course/CoursePreviewSVG'
 import Logo from '@/components/ui/Logo'
 import CourseActions from './CourseActions'
@@ -34,7 +34,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const distKm = (course.distance_m / 1000).toFixed(1)
   const description = `${distKm}km 러닝 코스`
   const pageUrl = `${SITE_URL}/course/${course.id}`
-  const imageUrl = `${SITE_URL}/api/og?courseId=${course.id}`
+  const imageUrl = ogImageUrl(course.id, course.created_at)
 
   return {
     title: `${course.title} - ShapeRun`,

@@ -1,9 +1,10 @@
-import { SITE_URL } from './site'
+import { SITE_URL, ogImageUrl } from './site'
 
 export interface ShareCourseParams {
   courseId: string
   title: string
   distanceM: number
+  createdAt: string
 }
 
 // 방금 저장된 코스는 /api/og가 콜드 상태라 카카오가 이미지를 가져오는 타이밍에
@@ -21,7 +22,7 @@ async function warmOgImageCache(imageUrl: string, timeoutMs = 3000) {
   }
 }
 
-export async function shareCourse({ courseId, title, distanceM }: ShareCourseParams) {
+export async function shareCourse({ courseId, title, distanceM, createdAt }: ShareCourseParams) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const kakao = (window as any).Kakao
   if (!kakao?.Share) {
@@ -31,7 +32,7 @@ export async function shareCourse({ courseId, title, distanceM }: ShareCoursePar
 
   const distKm = (distanceM / 1000).toFixed(1)
   const pageUrl = `${SITE_URL}/course/${courseId}`
-  const imageUrl = `${SITE_URL}/api/og?courseId=${courseId}`
+  const imageUrl = ogImageUrl(courseId, createdAt)
 
   await warmOgImageCache(imageUrl)
 

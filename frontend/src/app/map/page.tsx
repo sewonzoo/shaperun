@@ -245,7 +245,7 @@ export default function MapPage() {
 
   const handleShareSavedCourse = useCallback(() => {
     if (!savedCourse) return
-    shareCourse({ courseId: savedCourse.id, title: savedCourse.title, distanceM: savedCourse.distance_m })
+    shareCourse({ courseId: savedCourse.id, title: savedCourse.title, distanceM: savedCourse.distance_m, createdAt: savedCourse.created_at })
   }, [savedCourse])
 
   const handleSignOut = useCallback(async () => {

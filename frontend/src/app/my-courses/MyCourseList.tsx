@@ -336,7 +336,7 @@ export default function MyCourseList({
       else setDownloadedCourses(updater)
     }
 
-    shareCourse({ courseId: course.id, title: course.title, distanceM: course.distance_m })
+    shareCourse({ courseId: course.id, title: course.title, distanceM: course.distance_m, createdAt: course.created_at })
   }
 
   return (
