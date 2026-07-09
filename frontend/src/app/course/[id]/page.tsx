@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
+import { fetchNicknames } from '@/lib/courses'
 import type { Course } from '@/lib/courses'
 import { SITE_URL, ogImageUrl } from '@/lib/site'
 import CoursePreviewSVG from '@/components/course/CoursePreviewSVG'
@@ -16,12 +17,16 @@ async function getCourse(id: string): Promise<Course | null> {
   const supabase = createClient()
   const { data, error } = await supabase
     .from('courses')
-    .select('id, title, distance_m, duration_s, loop_closed, is_public, creator_name, region_name, waypoints, segments, created_at')
+    .select('id, user_id, title, distance_m, duration_s, loop_closed, is_public, creator_name, region_name, waypoints, segments, created_at')
     .eq('id', id)
     .single()
 
   if (error || !data) return null
-  return data as Course
+  const course = data as Course
+
+  const nicknames = await fetchNicknames(supabase, [course.user_id])
+  const liveName = course.user_id ? nicknames.get(course.user_id) : undefined
+  return { ...course, creator_name: liveName || course.creator_name }
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

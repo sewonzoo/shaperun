@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/client'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import type { LngLat, RouteSegment } from './api'
 
 export interface Course {
@@ -59,6 +60,29 @@ export async function getRegionName(lng: number, lat: number): Promise<string | 
   } catch {
     return null
   }
+}
+
+// courses.creator_name / original_user_name은 저장·다운로드 시점의
+// 닉네임 스냅샷이라 프로필에서 닉네임을 바꿔도 갱신되지 않는다. 화면
+// 표시용으로는 profiles 테이블의 현재 닉네임을 우선 쓰고, 탈퇴 등으로
+// profiles에 값이 없으면 그 스냅샷으로 폴백한다. courses <-> profiles
+// 사이에 PostgREST가 인식하는 FK 관계가 없어 select embedding
+// (`.select('*, profiles(nickname)')`)은 쓸 수 없어서 별도 조회 후
+// 코드에서 직접 합친다.
+export async function fetchNicknames(
+  client: SupabaseClient,
+  userIds: (string | null | undefined)[],
+): Promise<Map<string, string>> {
+  const uniqueIds = Array.from(new Set(userIds.filter((id): id is string => !!id)))
+  if (uniqueIds.length === 0) return new Map()
+
+  const { data } = await client.from('profiles').select('user_id, nickname').in('user_id', uniqueIds)
+
+  const map = new Map<string, string>()
+  for (const row of data ?? []) {
+    if (row.nickname) map.set(row.user_id, row.nickname)
+  }
+  return map
 }
 
 export async function saveCourse(data: {
@@ -174,7 +198,13 @@ export async function listPublicCourses(sort: SortType, period?: PeriodType): Pr
 
   const { data, error } = await query.limit(50)
   if (error) throw error
-  return (data ?? []) as Course[]
+
+  const courses = (data ?? []) as Course[]
+  const nicknames = await fetchNicknames(client, courses.map(c => c.user_id))
+  return courses.map(c => ({
+    ...c,
+    creator_name: (c.user_id && nicknames.get(c.user_id)) || c.creator_name,
+  }))
 }
 
 export async function deleteCourse(id: string): Promise<void> {

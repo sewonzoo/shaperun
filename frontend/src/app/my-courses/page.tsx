@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { fetchNicknames } from '@/lib/courses'
 import type { Course, DownloadedCourse } from '@/lib/courses'
 import MyCourseList from './MyCourseList'
 import Logo from '@/components/ui/Logo'
@@ -34,23 +35,35 @@ export default async function MyCoursesPage() {
   // 다운로드한 사본마다 원본이 아직 존재하는지 / 공개 상태인지 확인해서
   // 공유 버튼의 가능 여부를 결정한다. 사본 목록 로드 시 한 번에 조회한다.
   const originalIds = Array.from(new Set(downloadedCoursesRaw.map(c => c.original_course_id!)))
-  const originalsById = new Map<string, { id: string; title: string; distance_m: number; created_at: string; is_public: boolean }>()
+  const originalsById = new Map<string, { id: string; user_id: string; title: string; distance_m: number; created_at: string; is_public: boolean }>()
   if (originalIds.length > 0) {
     const { data: originals } = await supabase
       .from('courses')
-      .select('id, title, distance_m, created_at, is_public')
+      .select('id, user_id, title, distance_m, created_at, is_public')
       .in('id', originalIds)
     for (const o of originals ?? []) originalsById.set(o.id, o)
   }
 
+  // "출처: OOO" 표시도 저장 시점 스냅샷(original_user_name) 대신 원작자의
+  // 현재 닉네임을 우선 쓴다 — profiles에 값이 없으면(탈퇴 등) 기존 스냅샷으로 폴백.
+  const originalOwnerNicknames = await fetchNicknames(
+    supabase,
+    Array.from(originalsById.values()).map(o => o.user_id),
+  )
+
   const downloadedCourses: DownloadedCourse[] = downloadedCoursesRaw.map(c => {
     const original = originalsById.get(c.original_course_id!)
     if (!original) return { ...c, originalStatus: 'deleted', original: null }
-    if (!original.is_public) return { ...c, originalStatus: 'private', original: null }
+
+    const liveOwnerName = originalOwnerNicknames.get(original.user_id)
+    const original_user_name = liveOwnerName || c.original_user_name
+
+    if (!original.is_public) return { ...c, originalStatus: 'private', original: null, original_user_name }
     return {
       ...c,
       originalStatus: 'available',
       original: { id: original.id, title: original.title, distance_m: original.distance_m, created_at: original.created_at },
+      original_user_name,
     }
   })
 
