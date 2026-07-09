@@ -124,7 +124,7 @@ export default function GuidePage() {
   const [garminSub, setGarminSub] = useState<GarminSub>('mobile')
 
   return (
-    <main className="min-h-screen bg-gray-50" style={{ fontFamily: 'Pretendard, sans-serif' }}>
+    <main className="min-h-screen-safe bg-gray-50" style={{ fontFamily: 'Pretendard, sans-serif' }}>
 
       {/* Header */}
       <header className="bg-white border-b border-gray-100 sticky top-0 z-20">

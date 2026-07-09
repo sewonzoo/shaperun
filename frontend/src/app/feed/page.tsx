@@ -142,7 +142,7 @@ export default function FeedPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-50">
+    <main className="min-h-screen-safe bg-gray-50">
 
       {/* Header */}
       <header className="bg-white border-b border-gray-100 sticky top-0 z-20">

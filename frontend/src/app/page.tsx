@@ -37,7 +37,7 @@ function LandingInner() {
     })
 
   return (
-    <main className="relative min-h-screen bg-white flex flex-col items-center justify-center px-6 overflow-hidden">
+    <main className="relative min-h-screen-safe bg-white flex flex-col items-center justify-center px-6 overflow-hidden">
 
       {/* Background course SVG */}
       <svg

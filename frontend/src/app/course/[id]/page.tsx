@@ -61,7 +61,7 @@ export default async function CoursePage({ params }: Props) {
 
   if (!course.is_public) {
     return (
-      <main className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+      <main className="min-h-screen-safe bg-gray-50 flex items-center justify-center px-4">
         <div className="text-center">
           <p className="text-[15px] font-bold text-gray-700">비공개 코스입니다</p>
           <p className="text-[13px] text-gray-400 mt-1">코스 작성자가 공개로 전환하면 볼 수 있어요</p>
@@ -76,7 +76,7 @@ export default async function CoursePage({ params }: Props) {
   const distKm = (course.distance_m / 1000).toFixed(1)
 
   return (
-    <main className="min-h-screen bg-gray-50">
+    <main className="min-h-screen-safe bg-gray-50">
       <header className="bg-white border-b border-gray-100 sticky top-0 z-20">
         <div className="max-w-lg mx-auto px-4 h-14 flex items-center">
           <Link href="/map">

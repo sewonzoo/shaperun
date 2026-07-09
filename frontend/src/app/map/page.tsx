@@ -451,7 +451,7 @@ export default function MapPage() {
   ]
 
   return (
-    <main className="w-screen h-screen overflow-hidden relative bg-gray-100">
+    <main className="w-screen h-screen-safe overflow-hidden relative bg-gray-100">
       <MapView
         onRouteChange={handleRouteChange}
         onNavUpdate={handleNavUpdate}
