@@ -19,6 +19,15 @@ export interface Course {
   created_at: string
 }
 
+// 다운로드한 사본(original_course_id가 있는 코스)은 원본이 이미 공개
+// 상태로 존재하므로 항상 비공개로 유지된다 — 공유는 사본이 아니라
+// 원본 링크를 가리켜야 하고, 그 원본이 삭제되었거나 비공개로 바뀌면
+// 공유가 불가능해진다(사본 자체 기능은 계속 정상 사용 가능).
+export interface DownloadedCourse extends Course {
+  originalStatus: 'available' | 'deleted' | 'private'
+  original: { id: string; title: string; distance_m: number; created_at: string } | null
+}
+
 export class OwnCourseDownloadError extends Error {
   constructor() {
     super('본인이 만든 코스는 다운로드할 수 없어요')

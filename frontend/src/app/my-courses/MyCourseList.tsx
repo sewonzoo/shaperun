@@ -4,7 +4,7 @@ import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { deleteCourse, toggleCoursePublic } from '@/lib/courses'
-import type { Course } from '@/lib/courses'
+import type { Course, DownloadedCourse } from '@/lib/courses'
 import { shareCourse } from '@/lib/kakaoShare'
 import CoursePreviewSVG from '@/components/course/CoursePreviewSVG'
 import Link from 'next/link'
@@ -91,8 +91,14 @@ interface Props {
   userAvatar?: string
   initialNickname: string | null
   originalCourses: Course[]
-  downloadedCourses: Course[]
+  downloadedCourses: DownloadedCourse[]
   totalDownloads: number
+}
+
+function shareDisabledReason(status: DownloadedCourse['originalStatus']): string | undefined {
+  if (status === 'deleted') return '원본이 삭제되어 공유할 수 없어요'
+  if (status === 'private') return '원작자가 비공개로 전환해 공유할 수 없어요'
+  return undefined
 }
 
 function CourseSection({
@@ -103,6 +109,8 @@ function CourseSection({
   emptySubMessage,
   deleting,
   toggling,
+  showToggle,
+  getShareState,
   onDelete,
   onToggle,
   onView,
@@ -115,6 +123,8 @@ function CourseSection({
   emptySubMessage: string
   deleting: string | null
   toggling: string | null
+  showToggle: boolean
+  getShareState?: (course: Course) => { disabled: boolean; reason?: string }
   onDelete: (id: string) => void
   onToggle: (id: string, current: boolean) => void
   onView: (course: Course) => void
@@ -137,7 +147,9 @@ function CourseSection({
         </div>
       ) : (
         <div className="space-y-3">
-          {courses.map(course => (
+          {courses.map(course => {
+            const shareState = getShareState?.(course) ?? { disabled: false }
+            return (
             <div
               key={course.id}
               className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
@@ -169,24 +181,26 @@ function CourseSection({
                     <span className="text-[12px] font-semibold text-gray-700">
                       {formatDist(course.distance_m)}
                     </span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[11px]" style={{ color: course.is_public ? '#3b82f6' : '#9ca3af' }}>
-                        {course.is_public ? '공개' : '비공개'}
-                      </span>
-                      <button
-                        onClick={() => onToggle(course.id, course.is_public)}
-                        disabled={toggling === course.id}
-                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors disabled:opacity-40 ${course.is_public ? 'bg-blue-500' : 'bg-gray-300'}`}
-                      >
-                        {toggling === course.id ? (
-                          <span className="absolute inset-0 flex items-center justify-center">
-                            <span className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                          </span>
-                        ) : (
-                          <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${course.is_public ? 'translate-x-6' : 'translate-x-1'}`} />
-                        )}
-                      </button>
-                    </div>
+                    {showToggle && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px]" style={{ color: course.is_public ? '#3b82f6' : '#9ca3af' }}>
+                          {course.is_public ? '공개' : '비공개'}
+                        </span>
+                        <button
+                          onClick={() => onToggle(course.id, course.is_public)}
+                          disabled={toggling === course.id}
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors disabled:opacity-40 ${course.is_public ? 'bg-blue-500' : 'bg-gray-300'}`}
+                        >
+                          {toggling === course.id ? (
+                            <span className="absolute inset-0 flex items-center justify-center">
+                              <span className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                            </span>
+                          ) : (
+                            <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${course.is_public ? 'translate-x-6' : 'translate-x-1'}`} />
+                          )}
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -201,8 +215,14 @@ function CourseSection({
                 </button>
                 <div className="w-px bg-gray-50" />
                 <button
-                  onClick={() => onShare(course)}
-                  className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-[12px] font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
+                  onClick={() => {
+                    if (shareState.disabled) { if (shareState.reason) alert(shareState.reason); return }
+                    onShare(course)
+                  }}
+                  title={shareState.reason}
+                  className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-[12px] font-semibold transition-colors ${
+                    shareState.disabled ? 'text-gray-300' : 'text-gray-600 hover:bg-gray-50'
+                  }`}
                 >
                   <IconShare />
                   공유
@@ -222,7 +242,7 @@ function CourseSection({
                 </button>
               </div>
             </div>
-          ))}
+          )})}
         </div>
       )}
     </section>
@@ -296,13 +316,13 @@ export default function MyCourseList({
     }
   }
 
+  // 다운로드한 사본은 항상 비공개라 토글 UI 자체가 안 보이므로, 이 핸들러는
+  // "내가 만든 코스" 섹션에서만 호출된다.
   const handleTogglePublic = async (id: string, current: boolean) => {
     setToggling(id)
     try {
       await toggleCoursePublic(id, !current)
-      const updater = (cs: Course[]) => cs.map(c => c.id === id ? { ...c, is_public: !current } : c)
-      if (originalCourses.find(c => c.id === id)) setOriginalCourses(updater)
-      else setDownloadedCourses(updater)
+      setOriginalCourses(cs => cs.map(c => c.id === id ? { ...c, is_public: !current } : c))
     } catch {
       alert('변경에 실패했어요. 다시 시도해주세요.')
     } finally {
@@ -319,6 +339,8 @@ export default function MyCourseList({
     router.push(`/map?${params}`)
   }
 
+  // "내가 만든 코스" 전용 — 코스 자체를 공유하며, 비공개면 먼저 공개로
+  // 전환할지 확인한다.
   const handleShare = async (course: Course) => {
     if (!course.is_public) {
       const confirmed = window.confirm('이 코스를 공유하려면 공개로 전환해야 해요. 공개로 전환하고 공유할까요?')
@@ -331,12 +353,25 @@ export default function MyCourseList({
         return
       }
 
-      const updater = (cs: Course[]) => cs.map(c => c.id === course.id ? { ...c, is_public: true } : c)
-      if (originalCourses.find(c => c.id === course.id)) setOriginalCourses(updater)
-      else setDownloadedCourses(updater)
+      setOriginalCourses(cs => cs.map(c => c.id === course.id ? { ...c, is_public: true } : c))
     }
 
     shareCourse({ courseId: course.id, title: course.title, distanceM: course.distance_m, createdAt: course.created_at })
+  }
+
+  // "다운로드한 코스" 전용 — 사본이 아니라 원본 코스 페이지를 공유한다.
+  // 원본이 삭제되었거나 비공개로 바뀐 경우는 CourseSection이 클릭 시점에
+  // getShareStateForDownloaded로 미리 걸러 alert만 띄우고 여기까지 오지
+  // 않지만, 방어적으로 한 번 더 확인한다.
+  const getShareStateForDownloaded = (course: Course) => {
+    const status = (course as DownloadedCourse).originalStatus
+    return { disabled: status !== 'available', reason: shareDisabledReason(status) }
+  }
+
+  const handleShareDownloaded = async (course: Course) => {
+    const original = (course as DownloadedCourse).original
+    if (!original) return
+    shareCourse({ courseId: original.id, title: original.title, distanceM: original.distance_m, createdAt: original.created_at })
   }
 
   return (
@@ -434,6 +469,7 @@ export default function MyCourseList({
         emptySubMessage="지도에서 코스를 그려보세요"
         deleting={deleting}
         toggling={toggling}
+        showToggle
         onDelete={handleDelete}
         onToggle={handleTogglePublic}
         onView={handleView}
@@ -451,10 +487,12 @@ export default function MyCourseList({
         emptySubMessage="피드에서 다른 러너의 코스를 저장해보세요"
         deleting={deleting}
         toggling={toggling}
+        showToggle={false}
+        getShareState={getShareStateForDownloaded}
         onDelete={handleDelete}
         onToggle={handleTogglePublic}
         onView={handleView}
-        onShare={handleShare}
+        onShare={handleShareDownloaded}
       />
 
     </div>
