@@ -197,6 +197,9 @@ export default function MapPage() {
   const [sharing,       setSharing]       = useState(false)
   const [initialWaypoints, setInitialWaypoints] = useState<LngLat[]>([])
   const [initialLoop,      setInitialLoop]      = useState(false)
+  // URL의 ?wps=...로 불러온, "내가 그리던 게 아니라 조회하러 온" 남의
+  // 코스인지 여부. 로고 클릭 시 이 경우에만 하단바까지 완전히 리셋한다.
+  const [isViewingLoadedCourse, setIsViewingLoadedCourse] = useState(false)
   const [searchQuery,   setSearchQuery]   = useState('')
   const [geoResults,    setGeoResults]    = useState<GeoResult[]>([])
   const [flyToTarget,   setFlyToTarget]   = useState<{ lng: number; lat: number; id: number } | null>(null)
@@ -333,6 +336,7 @@ export default function MapPage() {
     if (parsed.length > 0) {
       setInitialWaypoints(parsed)
       setInitialLoop(params.get('loop') === '1')
+      setIsViewingLoadedCourse(true)
     }
   }, [])
 
@@ -387,6 +391,16 @@ export default function MapPage() {
   }, [])
 
   const handleResetView = useCallback(() => {
+    // "내가 그리던 중"인 경로는 로고 클릭 후에도 유지돼야 하지만, /course/[id]
+    // "지도에서 보기"로 불러온 "조회 중이던 남의 코스"는 로고 클릭 시 지도
+    // 위치뿐 아니라 하단바(경로 정보)까지 완전히 초기화한다.
+    if (isViewingLoadedCourse) {
+      setResetTrigger(t => t + 1)
+      setIsNavigating(false)
+      setNavInfo(null)
+      setIsViewingLoadedCourse(false)
+    }
+
     // 클릭마다 요청 ID를 증가시켜, 늦게 도착한 이전 클릭의 응답이
     // 최신 클릭의 결과를 덮어쓰지 않도록 매칭한다.
     const requestId = ++resetViewRequestIdRef.current
@@ -411,7 +425,7 @@ export default function MapPage() {
       },
       { timeout: 8000, enableHighAccuracy: true },
     )
-  }, [])
+  }, [isViewingLoadedCourse])
 
   const stopNav = useCallback(() => { setIsNavigating(false); setNavInfo(null) }, [])
 
