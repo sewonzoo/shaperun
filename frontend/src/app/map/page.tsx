@@ -206,6 +206,7 @@ export default function MapPage() {
   const [savedCourse,        setSavedCourse]        = useState<Course | null>(null)
   const [onboardingMounted,  setOnboardingMounted]  = useState(false)
   const [onboardingVisible,  setOnboardingVisible]  = useState(false)
+  const [showLoginPrompt,    setShowLoginPrompt]    = useState(false)
   const [resettingView,      setResettingView]      = useState(false)
   const searchInputRef = useRef<HTMLInputElement>(null)
   const supabaseRef    = useRef(createClient())
@@ -243,7 +244,18 @@ export default function MapPage() {
     setTimeout(() => setSavedToast(false), 3000)
   }, [])
 
+  // 로그인 여부는 항상 이 함수를 통해서만 체크한다 — 저장/공유 버튼 모두
+  // "로그인했는가"를 "저장했는가"보다 먼저 확인해야 하므로, 각 핸들러
+  // 맨 앞에서 호출해 우선순위를 강제한다.
+  const requireAuth = useCallback(() => {
+    if (authUser) return true
+    setShowLoginPrompt(true)
+    setTimeout(() => setShowLoginPrompt(false), 4000)
+    return false
+  }, [authUser])
+
   const handleShareSavedCourse = useCallback(async () => {
+    if (!requireAuth()) return
     if (!savedCourse) {
       alert('코스를 먼저 저장한 뒤 공유할 수 있어요')
       return
@@ -271,7 +283,7 @@ export default function MapPage() {
     } finally {
       setSharing(false)
     }
-  }, [savedCourse])
+  }, [requireAuth, savedCourse])
 
   const handleSignOut = useCallback(async () => {
     await supabaseRef.current.auth.signOut()
@@ -601,15 +613,13 @@ export default function MapPage() {
                 <IconPlay />
                 네비게이션
               </button>
-              {authUser && (
-                <button
-                  onClick={() => setShowSaveModal(true)}
-                  className="flex-1 flex items-center justify-center gap-1.5 py-3.5 text-[13px] font-semibold text-orange-500 hover:bg-orange-50 transition-colors"
-                >
-                  <IconSave />
-                  저장
-                </button>
-              )}
+              <button
+                onClick={() => { if (!requireAuth()) return; setShowSaveModal(true) }}
+                className="flex-1 flex items-center justify-center gap-1.5 py-3.5 text-[13px] font-semibold text-orange-500 hover:bg-orange-50 transition-colors"
+              >
+                <IconSave />
+                저장
+              </button>
               <button
                 onClick={() => downloadGPX(segments)}
                 className="flex-1 flex items-center justify-center gap-1.5 py-3.5 text-[13px] font-semibold text-gray-500 hover:bg-gray-50 transition-colors"
@@ -628,6 +638,21 @@ export default function MapPage() {
                 공유
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Login prompt (비로그인 상태에서 저장/공유 클릭 시) ──────────────── */}
+      {showLoginPrompt && (
+        <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
+          <div className="flex items-center gap-3 bg-gray-900/90 text-white text-[13px] font-medium pl-4 pr-2 py-2.5 rounded-full shadow-xl backdrop-blur-sm whitespace-nowrap">
+            내 코스 저장 및 카카오톡 공유는 로그인 후 사용 가능해요!
+            <button
+              className="pointer-events-auto bg-white/20 hover:bg-white/30 text-white text-[12px] font-semibold px-3 py-1 rounded-full transition-colors"
+              onClick={() => { setShowLoginPrompt(false); signInWithKakao() }}
+            >
+              로그인하기
+            </button>
           </div>
         </div>
       )}
