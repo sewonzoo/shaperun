@@ -1,9 +1,24 @@
 import { ImageResponse } from 'next/og'
 import { createClient } from '@supabase/supabase-js'
-import { computeCoursePath } from '@/lib/coursePreview'
+import { computeCoursePath, buildCoursePathSvgString } from '@/lib/coursePreview'
 import type { RouteSegment } from '@/lib/api'
 
 export const runtime = 'edge'
+
+// 카카오톡 링크 공유 카드는 이미지를 2:1 비율로 크롭해 보여준다(권장 800x400,
+// 최대 800x800). 캔버스를 정확히 2:1로 맞춰 크롭으로 인한 잘림을 원천 차단하고,
+// 경로는 텍스트 영역을 뺀 나머지 "안전 영역"(PATH_W x PATH_H)에 bounding box
+// 기준으로 동적 스케일링해 그린다 — 가로로 넓은 코스든 세로로 긴 코스든 항상
+// 이 사각형 안에 여백을 두고 들어온다.
+const OG_WIDTH = 1200
+const OG_HEIGHT = 600
+const PADDING = 56
+const LOGO_H = 40
+const GAP_TOP = 20
+const GAP_BOTTOM = 20
+const BOTTOM_H = 96
+const PATH_W = OG_WIDTH - PADDING * 2
+const PATH_H = OG_HEIGHT - PADDING * 2 - LOGO_H - GAP_TOP - GAP_BOTTOM - BOTTOM_H
 
 function fallbackImage() {
   return new ImageResponse(
@@ -27,7 +42,7 @@ function fallbackImage() {
         </div>
       </div>
     ),
-    { width: 1200, height: 630 },
+    { width: OG_WIDTH, height: OG_HEIGHT },
   )
 }
 
@@ -50,11 +65,11 @@ export async function GET(req: Request) {
 
   if (!course) return fallbackImage()
 
-  const geometry = computeCoursePath((course.segments ?? []) as RouteSegment[], 400)
+  const geometry = computeCoursePath((course.segments ?? []) as RouteSegment[], PATH_W, PATH_H)
   const distKm = (course.distance_m / 1000).toFixed(1)
   const pathDataUri = geometry
     ? `data:image/svg+xml,${encodeURIComponent(
-        `<svg xmlns="http://www.w3.org/2000/svg" width="${geometry.size}" height="${geometry.size}" viewBox="0 0 ${geometry.size} ${geometry.size}"><polyline points="${geometry.points}" fill="none" stroke="#378ADD" stroke-width="${geometry.strokeWidth * 1.5}" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+        buildCoursePathSvgString({ ...geometry, strokeWidth: geometry.strokeWidth * 1.5 }),
       )}`
     : null
 
@@ -67,21 +82,30 @@ export async function GET(req: Request) {
           display: 'flex',
           flexDirection: 'column',
           backgroundColor: '#ffffff',
-          padding: '60px',
+          padding: PADDING,
         }}
       >
-        <div style={{ display: 'flex', fontSize: 32, fontWeight: 700, color: '#1a1a1a' }}>
+        <div style={{ display: 'flex', height: LOGO_H, alignItems: 'center', fontSize: 32, fontWeight: 700, color: '#1a1a1a' }}>
           Shape<span style={{ color: '#378ADD' }}>Run</span>
         </div>
-        <div style={{ display: 'flex', flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+        <div
+          style={{
+            display: 'flex',
+            width: '100%',
+            height: PATH_H,
+            marginTop: GAP_TOP,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
           {pathDataUri ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={pathDataUri} width={400} height={400} />
+            <img src={pathDataUri} width={PATH_W} height={PATH_H} />
           ) : (
-            <div style={{ display: 'flex', width: 400, height: 400, borderRadius: 24, backgroundColor: '#f3f4f6' }} />
+            <div style={{ display: 'flex', width: PATH_W, height: PATH_H, borderRadius: 24, backgroundColor: '#f3f4f6' }} />
           )}
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', height: BOTTOM_H, marginTop: GAP_BOTTOM, justifyContent: 'center' }}>
           <div style={{ display: 'flex', fontSize: 48, fontWeight: 700, color: '#111827' }}>
             {course.title}
           </div>
@@ -92,8 +116,8 @@ export async function GET(req: Request) {
       </div>
     ),
     {
-      width: 1200,
-      height: 630,
+      width: OG_WIDTH,
+      height: OG_HEIGHT,
       headers: {
         'Cache-Control': 'public, immutable, no-transform, max-age=86400',
       },
