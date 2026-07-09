@@ -5,13 +5,15 @@ import type { RouteSegment } from '@/lib/api'
 
 export const runtime = 'edge'
 
-// 카카오톡 링크 공유 카드는 이미지를 2:1 비율로 크롭해 보여준다(권장 800x400,
-// 최대 800x800). 캔버스를 정확히 2:1로 맞춰 크롭으로 인한 잘림을 원천 차단하고,
-// 경로는 텍스트 영역을 뺀 나머지 "안전 영역"(PATH_W x PATH_H)에 bounding box
-// 기준으로 동적 스케일링해 그린다 — 가로로 넓은 코스든 세로로 긴 코스든 항상
-// 이 사각형 안에 여백을 두고 들어온다.
+// 카카오톡 Feed 템플릿은 content.imageUrl을 최대 800x800의 중앙 기준
+// 정사각형으로 Center Crop해서 보여준다. 즉 1200x600 캔버스에서 실제로
+// 항상 보이는 영역은 가운데 600x600(가로 300~900px)뿐이다. 경로 그림은
+// 캔버스 전체 폭(PATH_W)에 걸쳐 여백을 두고 그려 잘려도 자연스러운
+// 배경 장식으로 남기고, 로고/제목/설명 등 반드시 읽혀야 하는 텍스트는
+// 전부 이 중앙 정사각형(SAFE_W) 안에 들어오도록 가로 중앙 정렬한다.
 const OG_WIDTH = 1200
 const OG_HEIGHT = 600
+const SAFE_W = 600
 const PADDING = 56
 const LOGO_H = 40
 const GAP_TOP = 20
@@ -85,7 +87,7 @@ export async function GET(req: Request) {
           padding: PADDING,
         }}
       >
-        <div style={{ display: 'flex', height: LOGO_H, alignItems: 'center', fontSize: 32, fontWeight: 700, color: '#1a1a1a' }}>
+        <div style={{ display: 'flex', width: '100%', height: LOGO_H, alignItems: 'center', justifyContent: 'center', fontSize: 32, fontWeight: 700, color: '#1a1a1a' }}>
           Shape<span style={{ color: '#378ADD' }}>Run</span>
         </div>
         <div
@@ -105,11 +107,11 @@ export async function GET(req: Request) {
             <div style={{ display: 'flex', width: PATH_W, height: PATH_H, borderRadius: 24, backgroundColor: '#f3f4f6' }} />
           )}
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', height: BOTTOM_H, marginTop: GAP_BOTTOM, justifyContent: 'center' }}>
-          <div style={{ display: 'flex', fontSize: 48, fontWeight: 700, color: '#111827' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', height: BOTTOM_H, marginTop: GAP_BOTTOM, justifyContent: 'center' }}>
+          <div style={{ display: 'flex', width: SAFE_W, justifyContent: 'center', fontSize: 44, fontWeight: 700, color: '#111827', textAlign: 'center' }}>
             {course.title}
           </div>
-          <div style={{ display: 'flex', fontSize: 28, color: '#6b7280', marginTop: 8 }}>
+          <div style={{ display: 'flex', width: SAFE_W, justifyContent: 'center', fontSize: 26, color: '#6b7280', marginTop: 8, textAlign: 'center' }}>
             {distKm}km 러닝 코스
           </div>
         </div>
