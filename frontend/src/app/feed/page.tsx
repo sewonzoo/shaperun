@@ -51,6 +51,29 @@ function IconMap() {
   )
 }
 
+function IconList() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
+      <line x1="8" y1="6" x2="21" y2="6" />
+      <line x1="8" y1="12" x2="21" y2="12" />
+      <line x1="8" y1="18" x2="21" y2="18" />
+      <line x1="3" y1="6" x2="3.01" y2="6" />
+      <line x1="3" y1="12" x2="3.01" y2="12" />
+      <line x1="3" y1="18" x2="3.01" y2="18" />
+    </svg>
+  )
+}
+
+function IconLogin() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
+      <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+      <polyline points="10 17 15 12 10 7" />
+      <line x1="15" y1="12" x2="3" y2="12" />
+    </svg>
+  )
+}
+
 const RANK_CARD_CLASS = [
   'relative bg-white rounded-2xl shadow-sm overflow-hidden border-2 border-yellow-400',
   'relative bg-white rounded-2xl shadow-sm overflow-hidden border-2 border-gray-300',
@@ -157,15 +180,17 @@ export default function FeedPage() {
             {userId === undefined ? null : userId ? (
               <Link
                 href="/my-courses"
-                className="text-[12px] font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-full transition-colors"
+                className="inline-flex items-center gap-1 text-[12px] font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-full transition-colors"
               >
+                <IconList />
                 내 코스
               </Link>
             ) : (
               <Link
                 href="/"
-                className="text-[12px] font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-full transition-colors"
+                className="inline-flex items-center gap-1 text-[12px] font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-full transition-colors"
               >
+                <IconLogin />
                 로그인
               </Link>
             )}
