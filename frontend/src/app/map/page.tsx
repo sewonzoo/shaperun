@@ -7,7 +7,7 @@ import { downloadGPX } from '@/lib/gpx'
 import type { LngLat, RouteSegment } from '@/lib/api'
 import type { NavInfo } from '@/lib/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { getRegionName } from '@/lib/courses'
+import { toggleCoursePublic } from '@/lib/courses'
 import type { Course } from '@/lib/courses'
 import { shareCourse } from '@/lib/kakaoShare'
 import SaveCourseModal from '@/components/course/SaveCourseModal'
@@ -243,9 +243,34 @@ export default function MapPage() {
     setTimeout(() => setSavedToast(false), 3000)
   }, [])
 
-  const handleShareSavedCourse = useCallback(() => {
-    if (!savedCourse) return
-    shareCourse({ courseId: savedCourse.id, title: savedCourse.title, distanceM: savedCourse.distance_m, createdAt: savedCourse.created_at })
+  const handleShareSavedCourse = useCallback(async () => {
+    if (!savedCourse) {
+      alert('코스를 먼저 저장한 뒤 공유할 수 있어요')
+      return
+    }
+
+    let course = savedCourse
+    if (!course.is_public) {
+      const confirmed = window.confirm('이 코스를 공유하려면 공개로 전환해야 해요. 공개로 전환하고 공유할까요?')
+      if (!confirmed) return
+
+      try {
+        await toggleCoursePublic(course.id, true)
+      } catch {
+        alert('공개 전환에 실패했어요. 다시 시도해주세요.')
+        return
+      }
+
+      course = { ...course, is_public: true }
+      setSavedCourse(course)
+    }
+
+    setSharing(true)
+    try {
+      await shareCourse({ courseId: course.id, title: course.title, distanceM: course.distance_m, createdAt: course.created_at })
+    } finally {
+      setSharing(false)
+    }
   }, [savedCourse])
 
   const handleSignOut = useCallback(async () => {
@@ -377,39 +402,6 @@ export default function MapPage() {
   }, [])
 
   const stopNav = useCallback(() => { setIsNavigating(false); setNavInfo(null) }, [])
-
-  const handleKakaoShare = useCallback(async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const kakao = (window as any).Kakao
-    if (!kakao?.Share) {
-      alert('카카오 SDK가 아직 로드 중입니다. 잠시 후 다시 시도해주세요.')
-      return
-    }
-
-    const distKm = (segments.reduce((s, seg) => s + seg.distance, 0) / 1000).toFixed(1)
-    const pageUrl = window.location.href
-
-    setSharing(true)
-    let description = `${distKm}km 코스`
-    if (waypoints[0]) {
-      const region = await getRegionName(waypoints[0].lng, waypoints[0].lat).catch(() => null)
-      if (region) description = `${region} · ${distKm}km`
-    }
-    setSharing(false)
-
-    kakao.Share.sendDefault({
-      objectType: 'feed',
-      content: {
-        title: 'ShapeRun 코스',
-        description,
-        imageUrl: 'https://shaperun.vercel.app/icon.svg',
-        link: { mobileWebUrl: pageUrl, webUrl: pageUrl },
-      },
-      buttons: [
-        { title: '코스 보기', link: { mobileWebUrl: pageUrl, webUrl: pageUrl } },
-      ],
-    })
-  }, [waypoints, segments])
 
   // Derived
   const loopClosed    = waypoints.length > 0 && segments.length === waypoints.length
@@ -626,7 +618,7 @@ export default function MapPage() {
                 GPX
               </button>
               <button
-                onClick={handleKakaoShare}
+                onClick={handleShareSavedCourse}
                 disabled={sharing}
                 className="flex-1 flex items-center justify-center gap-1.5 py-3.5 text-[13px] font-semibold text-[#3A1D1D] hover:bg-[#FEE500]/20 transition-colors disabled:opacity-40"
               >
@@ -645,7 +637,7 @@ export default function MapPage() {
         <div className="absolute bottom-52 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
           <div className="flex items-center gap-3 bg-gray-900/90 text-white text-sm font-medium pl-4 pr-2 py-2 rounded-full shadow-xl backdrop-blur-sm whitespace-nowrap">
             코스가 저장됐어요
-            {savedCourse?.is_public && (
+            {savedCourse && (
               <button
                 className="pointer-events-auto bg-white/20 hover:bg-white/30 text-white text-[12px] font-semibold px-3 py-1 rounded-full transition-colors"
                 onClick={handleShareSavedCourse}
