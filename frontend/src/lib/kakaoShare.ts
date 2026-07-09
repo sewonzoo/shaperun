@@ -46,6 +46,7 @@ export async function shareCourse({ courseId, title, distanceM, createdAt }: Sha
     },
     buttons: [
       { title: '코스 보기', link: { mobileWebUrl: pageUrl, webUrl: pageUrl } },
+      { title: '서비스 이용하기', link: { mobileWebUrl: SITE_URL, webUrl: SITE_URL } },
     ],
   }
 
