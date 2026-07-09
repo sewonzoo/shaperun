@@ -130,6 +130,13 @@ function CourseSection({
   onView: (course: Course) => void
   onShare: (course: Course) => void
 }) {
+  // 섹션 헤더 액센트(blue/emerald)를 카드 왼쪽 바·거리 pill 색상에도 그대로
+  // 재사용해서, 어느 섹션의 코스인지 카드 하나하나에서도 바로 구분되게 한다.
+  const isBlue = accentClass.includes('blue')
+  const barColorClass = isBlue ? 'bg-blue-400' : 'bg-emerald-400'
+  const pillBgClass = isBlue ? 'bg-blue-50' : 'bg-emerald-50'
+  const pillTextClass = isBlue ? 'text-blue-600' : 'text-emerald-600'
+
   return (
     <section>
       <div className="flex items-center gap-3 mb-4 pb-3 border-b border-gray-200">
@@ -152,9 +159,10 @@ function CourseSection({
             return (
             <div
               key={course.id}
-              className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
+              className="relative bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow border border-gray-100 overflow-hidden"
             >
-              <div className="p-3 flex gap-3">
+              <span className={`absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl ${barColorClass}`} />
+              <div className="p-3 pl-4 flex gap-3">
                 <CoursePreviewSVG segments={course.segments ?? []} size={80} />
 
                 <div className="flex-1 min-w-0 flex flex-col justify-between">
@@ -178,7 +186,7 @@ function CourseSection({
                   </p>
 
                   <div className="flex items-center justify-between mt-2">
-                    <span className="text-[12px] font-semibold text-gray-700">
+                    <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${pillBgClass} ${pillTextClass}`}>
                       {formatDist(course.distance_m)}
                     </span>
                     {showToggle && (

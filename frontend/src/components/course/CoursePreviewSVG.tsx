@@ -23,14 +23,14 @@ export default function CoursePreviewSVG({ segments, size = 120 }: Props) {
   return (
     <div
       style={{ width: size, height: size, flexShrink: 0 }}
-      className="rounded-2xl bg-white border border-gray-100 overflow-hidden"
+      className="rounded-2xl bg-gradient-to-br from-blue-50 via-white to-indigo-50 ring-1 ring-blue-100 overflow-hidden"
     >
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
         <polyline
           points={geometry.points}
           fill="none"
           stroke="#378ADD"
-          strokeWidth={geometry.strokeWidth}
+          strokeWidth={geometry.strokeWidth * 1.15}
           strokeLinecap="round"
           strokeLinejoin="round"
         />

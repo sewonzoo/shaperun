@@ -240,10 +240,13 @@ export default function FeedPage() {
               return (
               <div
                 key={course.id}
-                className={rankIdx !== null ? RANK_CARD_CLASS[rankIdx] : 'relative bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100'}
+                className={rankIdx !== null ? RANK_CARD_CLASS[rankIdx] : 'relative bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow overflow-hidden border border-gray-100'}
               >
                 {rankIdx !== null && <RankBadge idx={rankIdx} />}
-                <div className="p-3 flex gap-3">
+                {rankIdx === null && (
+                  <span className={`absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl ${course.loop_closed ? 'bg-emerald-400' : 'bg-blue-400'}`} />
+                )}
+                <div className="p-3 pl-4 flex gap-3">
                   {/* Route preview */}
                   <CoursePreviewSVG segments={course.segments ?? []} size={80} />
 
@@ -287,7 +290,7 @@ export default function FeedPage() {
 
                     {/* Stats */}
                     <div className="flex items-center gap-2 mt-2">
-                      <span className="text-[12px] font-semibold text-gray-700">
+                      <span className="text-[11px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
                         {formatDist(course.distance_m)}
                       </span>
                       {course.loop_closed && (
