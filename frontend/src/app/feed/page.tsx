@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import { listPublicCourses, downloadCourse } from '@/lib/courses'
+import { listPublicCourses, downloadCourse, OwnCourseDownloadError, AlreadyDownloadedError } from '@/lib/courses'
 import type { Course, SortType, PeriodType } from '@/lib/courses'
 import Logo from '@/components/ui/Logo'
 import CoursePreviewSVG from '@/components/course/CoursePreviewSVG'
@@ -80,6 +80,12 @@ export default function FeedPage() {
   const [userId, setUserId] = useState<string | null>(null)
   const [downloading, setDownloading] = useState<string | null>(null)
   const [downloaded, setDownloaded] = useState<Set<string>>(new Set())
+  const [toast, setToast] = useState<string | null>(null)
+
+  const showToast = (message: string) => {
+    setToast(message)
+    setTimeout(() => setToast(null), 2500)
+  }
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -121,7 +127,15 @@ export default function FeedPage() {
       await downloadCourse(courseId)
       setDownloaded(prev => { const next = new Set(Array.from(prev)); next.add(courseId); return next })
     } catch (e) {
-      console.error('download failed', e)
+      if (e instanceof AlreadyDownloadedError) {
+        setDownloaded(prev => { const next = new Set(Array.from(prev)); next.add(courseId); return next })
+        showToast('이미 다운로드한 코스예요')
+      } else if (e instanceof OwnCourseDownloadError) {
+        showToast('본인이 만든 코스는 다운로드할 수 없어요')
+      } else {
+        console.error('download failed', e)
+        showToast('다운로드에 실패했어요. 다시 시도해주세요.')
+      }
     } finally {
       setDownloading(null)
     }
@@ -238,24 +252,30 @@ export default function FeedPage() {
                     {/* Top: title + download */}
                     <div className="flex items-start justify-between gap-2">
                       <h3 className="text-[14px] font-bold text-gray-900 truncate leading-snug">{course.title}</h3>
-                      <button
-                        onClick={() => handleDownload(course.id)}
-                        disabled={downloading === course.id || downloaded.has(course.id)}
-                        className={`shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-[11px] font-bold transition-colors ${
-                          downloaded.has(course.id)
-                            ? 'bg-emerald-50 text-emerald-600'
-                            : 'bg-blue-50 text-blue-600 hover:bg-blue-100 disabled:opacity-50'
-                        }`}
-                      >
-                        {downloading === course.id ? (
-                          <span className="w-3 h-3 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                        ) : downloaded.has(course.id) ? (
-                          <IconCheck />
-                        ) : (
-                          <IconDownload />
-                        )}
-                        {downloaded.has(course.id) ? '저장됨' : '다운로드'}
-                      </button>
+                      {course.user_id && course.user_id === userId ? (
+                        <span className="shrink-0 px-2.5 py-1.5 rounded-xl text-[11px] font-bold bg-gray-100 text-gray-400">
+                          내가 만든 코스예요
+                        </span>
+                      ) : (
+                        <button
+                          onClick={() => handleDownload(course.id)}
+                          disabled={downloading === course.id || downloaded.has(course.id)}
+                          className={`shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-[11px] font-bold transition-colors ${
+                            downloaded.has(course.id)
+                              ? 'bg-emerald-50 text-emerald-600'
+                              : 'bg-blue-50 text-blue-600 hover:bg-blue-100 disabled:opacity-50'
+                          }`}
+                        >
+                          {downloading === course.id ? (
+                            <span className="w-3 h-3 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                          ) : downloaded.has(course.id) ? (
+                            <IconCheck />
+                          ) : (
+                            <IconDownload />
+                          )}
+                          {downloaded.has(course.id) ? '저장됨' : '다운로드'}
+                        </button>
+                      )}
                     </div>
 
                     {/* Meta */}
@@ -307,6 +327,13 @@ export default function FeedPage() {
           </Link>
         </div>
       </div>
+
+      {/* Toast */}
+      {toast && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-30 bg-gray-900/90 text-white text-[13px] font-medium px-4 py-2.5 rounded-full shadow-xl backdrop-blur-sm whitespace-nowrap">
+          {toast}
+        </div>
+      )}
     </main>
   )
 }

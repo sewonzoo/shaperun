@@ -3,6 +3,7 @@ import type { LngLat, RouteSegment } from './api'
 
 export interface Course {
   id: string
+  user_id?: string
   title: string
   distance_m: number
   duration_s: number
@@ -16,6 +17,20 @@ export interface Course {
   original_user_name: string | null
   region_name: string | null
   created_at: string
+}
+
+export class OwnCourseDownloadError extends Error {
+  constructor() {
+    super('본인이 만든 코스는 다운로드할 수 없어요')
+    this.name = 'OwnCourseDownloadError'
+  }
+}
+
+export class AlreadyDownloadedError extends Error {
+  constructor() {
+    super('이미 다운로드한 코스예요')
+    this.name = 'AlreadyDownloadedError'
+  }
 }
 
 export async function getRegionName(lng: number, lat: number): Promise<string | null> {
@@ -90,6 +105,8 @@ export async function downloadCourse(courseId: string): Promise<Course> {
 
   if (fetchError || !original) throw new Error('코스를 찾을 수 없습니다')
 
+  if (original.user_id === user.id) throw new OwnCourseDownloadError()
+
   const { data: copied, error: insertError } = await client
     .from('courses')
     .insert({
@@ -109,9 +126,16 @@ export async function downloadCourse(courseId: string): Promise<Course> {
     .select()
     .single()
 
-  if (insertError) throw insertError
+  if (insertError) {
+    if (insertError.code === '23505') throw new AlreadyDownloadedError()
+    throw insertError
+  }
 
-  await client.rpc('increment_download_count', { course_id: courseId })
+  // 이중 안전장치: 자기 코스 다운로드는 위에서 이미 막히지만,
+  // 혹시라도 여기까지 도달하더라도 자기 자신의 download_count는 올리지 않는다.
+  if (original.user_id !== user.id) {
+    await client.rpc('increment_download_count', { course_id: courseId })
+  }
 
   return copied as Course
 }
@@ -124,7 +148,7 @@ export async function listPublicCourses(sort: SortType, period?: PeriodType): Pr
 
   let query = client
     .from('courses')
-    .select('id, title, distance_m, duration_s, loop_closed, download_count, creator_name, region_name, created_at, segments, waypoints')
+    .select('id, user_id, title, distance_m, duration_s, loop_closed, download_count, creator_name, region_name, created_at, segments, waypoints')
     .eq('is_public', true)
     .is('original_course_id', null)
 
