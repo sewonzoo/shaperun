@@ -319,11 +319,23 @@ export default function MyCourseList({
     router.push(`/map?${params}`)
   }
 
-  const handleShare = (course: Course) => {
+  const handleShare = async (course: Course) => {
     if (!course.is_public) {
-      alert('공유하려면 먼저 코스를 공개로 설정해주세요')
-      return
+      const confirmed = window.confirm('이 코스를 공유하려면 공개로 전환해야 해요. 공개로 전환하고 공유할까요?')
+      if (!confirmed) return
+
+      try {
+        await toggleCoursePublic(course.id, true)
+      } catch {
+        alert('공개 전환에 실패했어요. 다시 시도해주세요.')
+        return
+      }
+
+      const updater = (cs: Course[]) => cs.map(c => c.id === course.id ? { ...c, is_public: true } : c)
+      if (originalCourses.find(c => c.id === course.id)) setOriginalCourses(updater)
+      else setDownloadedCourses(updater)
     }
+
     shareCourse({ courseId: course.id, title: course.title, distanceM: course.distance_m })
   }
 
