@@ -78,7 +78,7 @@ export default async function MyCoursesPage() {
           </Link>
           <Link
             href="/feed"
-            className="text-[13px] font-semibold text-gray-500 hover:text-gray-800 transition-colors"
+            className="text-[12px] font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-full transition-colors"
           >
             피드
           </Link>

@@ -154,14 +154,14 @@ export default function FeedPage() {
             {userId ? (
               <Link
                 href="/my-courses"
-                className="text-[13px] font-semibold text-gray-600 hover:text-gray-900 transition-colors"
+                className="text-[12px] font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-full transition-colors"
               >
                 내 코스
               </Link>
             ) : (
               <Link
                 href="/"
-                className="text-[13px] font-semibold text-blue-600 hover:text-blue-700 transition-colors"
+                className="text-[12px] font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-full transition-colors"
               >
                 로그인
               </Link>
