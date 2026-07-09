@@ -401,7 +401,7 @@ export default function MyCourseList({
                     if (e.key === 'Enter') handleSaveNickname()
                     if (e.key === 'Escape') handleCancelEdit()
                   }}
-                  className="flex-1 min-w-0 text-[15px] font-bold text-gray-900 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  className="flex-1 min-w-0 text-base font-bold text-gray-900 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-400"
                   maxLength={20}
                   autoFocus
                 />

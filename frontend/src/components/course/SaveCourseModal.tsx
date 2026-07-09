@@ -61,7 +61,7 @@ export default function SaveCourseModal({ waypoints, segments, loopClosed, onClo
           onKeyDown={e => { if (e.key === 'Enter') handleSave() }}
           maxLength={60}
           placeholder="예: 한강 5km 코스"
-          className="w-full h-12 rounded-2xl border border-gray-200 px-4 text-[14px] text-gray-800 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition mb-3"
+          className="w-full h-12 rounded-2xl border border-gray-200 px-4 text-base text-gray-800 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition mb-3"
           disabled={saving}
         />
 
