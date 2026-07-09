@@ -77,7 +77,10 @@ export default function FeedPage() {
   const [period, setPeriod] = useState<PeriodType>('1w')
   const [courses, setCourses] = useState<Course[]>([])
   const [loading, setLoading] = useState(true)
-  const [userId, setUserId] = useState<string | null>(null)
+  // undefined = 로그인 여부 확인 중, null = 확인됨(비로그인), string = 로그인됨.
+  // undefined와 null을 구분하지 않으면 로그인 상태에서도 확인이 끝나기 전까지
+  // 잠깐 "로그인" 버튼이 먼저 그려졌다가 "내 코스"로 바뀌는 깜빡임이 생긴다.
+  const [userId, setUserId] = useState<string | null | undefined>(undefined)
   const [downloading, setDownloading] = useState<string | null>(null)
   const [downloaded, setDownloaded] = useState<Set<string>>(new Set())
   const [toast, setToast] = useState<string | null>(null)
@@ -89,7 +92,7 @@ export default function FeedPage() {
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) setUserId(user.id)
+      setUserId(user?.id ?? null)
     })
   }, [supabase])
 
@@ -151,7 +154,7 @@ export default function FeedPage() {
             <Logo width={110} height={33} />
           </Link>
           <div className="flex items-center gap-3">
-            {userId ? (
+            {userId === undefined ? null : userId ? (
               <Link
                 href="/my-courses"
                 className="text-[12px] font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-full transition-colors"
@@ -211,7 +214,7 @@ export default function FeedPage() {
         )}
 
         {/* Guest banner */}
-        {!userId && (
+        {userId === null && (
           <div className="mb-5 bg-blue-50 border border-blue-100 rounded-2xl px-4 py-3 flex items-center justify-between">
             <p className="text-[13px] text-blue-700 font-medium">로그인하면 코스를 다운로드할 수 있어요</p>
             <Link
