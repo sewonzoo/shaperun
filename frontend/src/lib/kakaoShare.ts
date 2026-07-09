@@ -1,4 +1,4 @@
-import { SITE_URL, ogImageUrl } from './site'
+import { SITE_URL, ogImageUrl, ogImagePath } from './site'
 
 export interface ShareCourseParams {
   courseId: string
@@ -12,12 +12,19 @@ export interface ShareCourseParams {
 // 공유 다이얼로그를 열기 전에 한 번 미리 요청해 캐시를 워밍업한다.
 // 성공/실패(타임아웃 포함) 모두 소요 시간을 콘솔에 남겨 콜드/웜 응답 속도를
 // 비교할 수 있게 한다 — 로깅만 할 뿐 공유 흐름에는 영향을 주지 않는다.
-async function warmOgImageCache(imageUrl: string, courseId: string, timeoutMs = 3000) {
+//
+// imagePath는 절대경로(https://shaperun.kr/...)가 아니라 상대경로를 받는다.
+// apex(shaperun.kr)와 www(www.shaperun.kr) 도메인이 서로 다른 origin이라,
+// www에서 접속 중인 사용자가 apex 절대경로로 fetch하면 CORS에 막힌다.
+// 상대경로로 요청하면 항상 현재 접속 중인 origin 기준으로 요청되어 이 문제가
+// 생기지 않는다. (카카오 서버가 직접 fetch하는 content.imageUrl은 브라우저가
+// 아니라 서버 간 요청이라 CORS 대상이 아니므로 그쪽은 절대경로를 그대로 쓴다.)
+async function warmOgImageCache(imagePath: string, courseId: string, timeoutMs = 3000) {
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), timeoutMs)
   const start = performance.now()
   try {
-    const res = await fetch(imageUrl, { cache: 'no-store', signal: controller.signal })
+    const res = await fetch(imagePath, { cache: 'no-store', signal: controller.signal })
     const elapsedMs = Math.round(performance.now() - start)
     console.log('[kakaoShare] OG 이미지 워밍업 성공:', { courseId, elapsedMs, status: res.status })
   } catch (err) {
@@ -41,7 +48,7 @@ export async function shareCourse({ courseId, title, distanceM, createdAt }: Sha
   const pageUrl = `${SITE_URL}/course/${courseId}`
   const imageUrl = ogImageUrl(courseId, createdAt)
 
-  await warmOgImageCache(imageUrl, courseId)
+  await warmOgImageCache(ogImagePath(courseId, createdAt), courseId)
 
   const payload = {
     objectType: 'feed' as const,

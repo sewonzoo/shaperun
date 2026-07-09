@@ -4,7 +4,12 @@ export const SITE_URL = 'https://shaperun.kr'
 // 바뀌어도 URL 자체는 그대로라 Vercel/카카오 캐시를 완전히 무효화하진
 // 못하지만, 최소한 이전에 캐시되지 않은 새 URL이라 최초 공유 시점의
 // 크롤링에서는 캐시를 우회한다.
-export function ogImageUrl(courseId: string, createdAt: string): string {
+export function ogImagePath(courseId: string, createdAt: string): string {
   const v = new Date(createdAt).getTime()
-  return `${SITE_URL}/api/og?courseId=${courseId}&v=${v}`
+  return `/api/og?courseId=${courseId}&v=${v}`
+}
+
+// 카카오 서버가 직접 fetch하는 content.imageUrl은 절대경로여야 한다.
+export function ogImageUrl(courseId: string, createdAt: string): string {
+  return `${SITE_URL}${ogImagePath(courseId, createdAt)}`
 }
