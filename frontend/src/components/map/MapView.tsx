@@ -25,6 +25,7 @@ interface Props {
   flyToTarget?: { lng: number; lat: number; id: number } | null
   resetViewTrigger?: number
   onCenterChange?: (center: { lng: number; lat: number }) => void
+  importedRoute?: { points: LngLat[]; id: number } | null
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -125,6 +126,7 @@ export default function MapView({
   onRouteChange, onNavUpdate,
   resetTrigger, undoTrigger, closeLoopTrigger, isNavigating,
   initialWaypoints, initialLoop, flyToTarget, resetViewTrigger, onCenterChange,
+  importedRoute,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef       = useRef<mapboxgl.Map | null>(null)
@@ -462,6 +464,60 @@ export default function MapView({
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mapLoaded, initialWaypoints])
+
+  // ── GPX 파일 가져오기 ─────────────────────────────────────────────────────
+  // 가져온 트랙은 도로 스냅(getWalkingRoute) 없이 원본 좌표를 그대로 단일
+  // 세그먼트로 주입한다 — 이미 실제로 기록된 경로라 재라우팅하면 원본과
+  // 달라지고, 점이 수백~수천 개라 쌍마다 Directions API를 부르는 것도 비현실적.
+  // 이렇게 하면 undo/reset 등 기존 로직이 "세그먼트 1개짜리 코스"로 그대로 동작한다.
+  useEffect(() => {
+    const map = mapRef.current
+    if (!mapLoaded || !map || !importedRoute || importedRoute.points.length < 2) return
+
+    if (watchIdRef.current !== null) { navigator.geolocation.clearWatch(watchIdRef.current); watchIdRef.current = null }
+    navMarkerRef.current?.remove(); navMarkerRef.current = null
+    markersRef.current.forEach(m => m.remove()); markersRef.current = []
+
+    const pts = importedRoute.points
+    const first = pts[0]
+    const last = pts[pts.length - 1]
+    const isLoop = first.lng === last.lng && first.lat === last.lat
+
+    let distanceM = 0
+    for (let i = 1; i < pts.length; i++) {
+      distanceM += haversineM(pts[i - 1].lat, pts[i - 1].lng, pts[i].lat, pts[i].lng)
+    }
+
+    const seg: RouteSegment = {
+      coordinates: pts.map(p => [p.lng, p.lat]),
+      distance: distanceM,
+      duration: distanceM / 1.39, // 도보 속도(약 5km/h, Directions API 기준) 추정치
+    }
+
+    waypointsRef.current = isLoop ? [first] : [first, last]
+    segmentsRef.current = [seg]
+
+    const startMarker = new mapboxgl.Marker({ element: makeWaypointEl(0) }).setLngLat([first.lng, first.lat]).addTo(map)
+    markersRef.current.push(startMarker)
+    if (!isLoop) {
+      const endMarker = new mapboxgl.Marker({ element: makeWaypointEl(1) }).setLngLat([last.lng, last.lat]).addTo(map)
+      markersRef.current.push(endMarker)
+    }
+
+    applyRouteData(map, segmentsRef.current)
+    clearPreview(map)
+    setRouteError(null)
+
+    const bounds = seg.coordinates.reduce(
+      (b, c) => b.extend(c),
+      new mapboxgl.LngLatBounds(seg.coordinates[0], seg.coordinates[0]),
+    )
+    map.fitBounds(bounds, { padding: 60, duration: 800 })
+
+    const canvas = map.getCanvas(); if (canvas) canvas.style.cursor = 'crosshair'
+    onRouteChangeRef.current([...waypointsRef.current], [...segmentsRef.current])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [importedRoute, mapLoaded])
 
   // ── Reset ──────────────────────────────────────────────────────────────────
   useEffect(() => {

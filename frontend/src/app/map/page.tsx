@@ -4,6 +4,7 @@ import dynamic from 'next/dynamic'
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { downloadGPX } from '@/lib/gpx'
+import { parseGPX, GpxParseError } from '@/lib/gpxParser'
 import type { LngLat, RouteSegment } from '@/lib/api'
 import type { NavInfo } from '@/lib/navigation'
 import { createClient } from '@/lib/supabase/client'
@@ -211,7 +212,12 @@ export default function MapPage() {
   const [onboardingVisible,  setOnboardingVisible]  = useState(false)
   const [showLoginPrompt,    setShowLoginPrompt]    = useState(false)
   const [resettingView,      setResettingView]      = useState(false)
+  const [importedRoute,      setImportedRoute]      = useState<{ points: LngLat[]; id: number } | null>(null)
+  const [importedTitle,      setImportedTitle]      = useState<string | undefined>(undefined)
+  const [importedHasElevation, setImportedHasElevation] = useState(false)
+  const [importError,        setImportError]        = useState<string | null>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
+  const gpxInputRef     = useRef<HTMLInputElement>(null)
   const supabaseRef    = useRef(createClient())
   const resetViewRequestIdRef = useRef(0)
 
@@ -388,7 +394,34 @@ export default function MapPage() {
     setResetTrigger(t => t + 1)
     setIsNavigating(false)
     setNavInfo(null)
+    setImportedTitle(undefined)
+    setImportedHasElevation(false)
   }, [])
+
+  const handleGpxFile = useCallback(async (file: File) => {
+    try {
+      const text = await file.text()
+      const parsed = parseGPX(text, file.name)
+      const points: LngLat[] = parsed.points.map(p => ({ lng: p.lon, lat: p.lat }))
+      setIsViewingLoadedCourse(false)
+      setIsNavigating(false)
+      setNavInfo(null)
+      setImportedRoute({ points, id: Date.now() })
+      setImportedTitle(parsed.name)
+      setImportedHasElevation(parsed.hasElevation)
+      setImportError(null)
+    } catch (e) {
+      setImportedHasElevation(false)
+      setImportError(e instanceof GpxParseError ? e.message : 'GPX 파일을 불러오지 못했습니다.')
+      setTimeout(() => setImportError(null), 4000)
+    }
+  }, [])
+
+  const handleGpxInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (file) handleGpxFile(file)
+  }, [handleGpxFile])
 
   const handleResetView = useCallback(() => {
     // "내가 그리던 중"인 경로는 로고 클릭 후에도 유지돼야 하지만, /course/[id]
@@ -442,11 +475,13 @@ export default function MapPage() {
   const loggedInItems: DropdownItem[] = [
     { label: '커뮤니티 피드', onClick: () => router.push('/feed') },
     { label: '내 코스', onClick: () => router.push('/my-courses') },
+    { label: 'GPX 파일 가져오기', onClick: () => gpxInputRef.current?.click() },
     { label: 'GPX 활용 가이드', onClick: () => router.push('/guide') },
     { label: '로그아웃', onClick: handleSignOut, className: 'text-red-500' },
   ]
   const guestItems: DropdownItem[] = [
     { label: '로그인', onClick: () => router.push('/') },
+    { label: 'GPX 파일 가져오기', onClick: () => gpxInputRef.current?.click() },
     { label: 'GPX 활용 가이드', onClick: () => router.push('/guide') },
   ]
 
@@ -463,6 +498,15 @@ export default function MapPage() {
         initialLoop={initialLoop}
         flyToTarget={flyToTarget}
         resetViewTrigger={resetViewTrigger}
+        importedRoute={importedRoute}
+      />
+
+      <input
+        ref={gpxInputRef}
+        type="file"
+        accept=".gpx"
+        className="hidden"
+        onChange={handleGpxInputChange}
       />
 
       {/* ── Header pill + search ────────────────────────────────────────── */}
@@ -560,6 +604,24 @@ export default function MapPage() {
           )}
         </div>
       </div>
+
+      {/* ── GPX 가져오기 실패 토스트 ─────────────────────────────────────── */}
+      {importError && (
+        <div
+          onClick={() => setImportError(null)}
+          className="absolute top-16 left-1/2 -translate-x-1/2 w-max max-w-[280px] bg-red-50 border border-red-200 text-red-600 text-xs font-medium px-4 py-2.5 rounded-xl shadow-md cursor-pointer z-20"
+        >
+          {importError}
+        </div>
+      )}
+
+      {/* ── 고도 데이터 포함 뱃지 (GPX 가져오기) ────────────────────────── */}
+      {importedHasElevation && hasRoute && (
+        <div className="absolute left-3 top-[80px] z-10 flex items-center gap-1.5 bg-white/95 backdrop-blur-sm text-emerald-600 text-[11px] font-semibold px-2.5 py-1.5 rounded-full shadow-lg">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+          고도 데이터 포함됨
+        </div>
+      )}
 
       {/* ── Left floating: undo + reset ──────────────────────────────────── */}
       {waypoints.length > 0 && !isNavigating && (
@@ -718,6 +780,7 @@ export default function MapPage() {
           waypoints={waypoints}
           segments={segments}
           loopClosed={loopClosed}
+          initialTitle={importedTitle}
           onClose={() => setShowSaveModal(false)}
           onSaved={handleSaved}
         />

@@ -9,6 +9,7 @@ interface Props {
   waypoints: LngLat[]
   segments: RouteSegment[]
   loopClosed: boolean
+  initialTitle?: string
   onClose: () => void
   onSaved: (course: Course) => void
 }
@@ -18,8 +19,8 @@ function defaultTitle(segments: RouteSegment[]): string {
   return `${km} km 코스`
 }
 
-export default function SaveCourseModal({ waypoints, segments, loopClosed, onClose, onSaved }: Props) {
-  const [title,    setTitle]    = useState(() => defaultTitle(segments))
+export default function SaveCourseModal({ waypoints, segments, loopClosed, initialTitle, onClose, onSaved }: Props) {
+  const [title,    setTitle]    = useState(() => initialTitle ?? defaultTitle(segments))
   const [isPublic, setIsPublic] = useState(false)
   const [saving,   setSaving]   = useState(false)
   const [error,    setError]    = useState<string | null>(null)
