@@ -42,7 +42,7 @@ function makeWaypointEl(index: number): HTMLElement {
     'border:3px solid #fff', 'border-radius:50%',
     'box-shadow:0 2px 8px rgba(0,0,0,0.35)',
     'display:flex', 'align-items:center', 'justify-content:center',
-    'font-size:7px', 'font-weight:700', 'color:#fff', 'pointer-events:none',
+    'font-size:7px', 'font-weight:700', 'color:#fff', 'cursor:grab',
   ].join(';')
   if (!isStart) el.textContent = String(index + 1)
   return el
@@ -160,6 +160,129 @@ export default function MapView({
   const locationMarkerRef = useRef<mapboxgl.Marker | null>(null)
   const nextWpIdxRef     = useRef(0)
 
+  // 드래그 종료 직후 mapbox가 합성 클릭을 발생시켜 같은 자리에 새 웨이포인트가
+  // 추가되는 걸 막기 위한 타임스탬프 가드
+  const suppressClickUntilRef = useRef(0)
+
+  // 라우팅 중이거나 네비게이션 중일 땐 마커를 드래그할 수 없게 한다. Marker의
+  // 'dragstart' 이벤트는 취소 가능한 DOM 이벤트가 아니라(e.preventDefault 없음)
+  // draggable 자체를 꺼서 드래그가 시작되지 않도록 막는 게 유일하게 확실한 방법이다.
+  useEffect(() => {
+    const draggable = !isNavigating && !isRouting
+    markersRef.current.forEach(m => m.setDraggable(draggable))
+  }, [isNavigating, isRouting])
+
+  // 웨이포인트 마커 생성 + 드래그로 위치 수정 배선. 드래그 중엔 인접 웨이포인트와
+  // 잇는 직선 프리뷰만 그리고, 실제 재라우팅은 dragend에서 인접 구간만 골라 수행한다.
+  function createWaypointMarker(map: mapboxgl.Map, index: number, lngLat: LngLat): mapboxgl.Marker {
+    const marker = new mapboxgl.Marker({
+      element: makeWaypointEl(index),
+      draggable: !isRoutingRef.current && !isNavigatingRef.current,
+    })
+      .setLngLat([lngLat.lng, lngLat.lat])
+      .addTo(map)
+
+    let dragOrigin: LngLat = lngLat
+
+    marker.on('dragstart', () => {
+      if (isRoutingRef.current || isNavigatingRef.current) return
+      const idx = markersRef.current.indexOf(marker)
+      dragOrigin = waypointsRef.current[idx] ?? lngLat
+    })
+
+    marker.on('drag', () => {
+      if (isRoutingRef.current || isNavigatingRef.current) return
+      const map2 = mapRef.current
+      if (!map2) return
+
+      const idx = markersRef.current.indexOf(marker)
+      const wps = waypointsRef.current
+      const loop = isLoopClosed(wps, segmentsRef.current)
+      const cur = marker.getLngLat()
+
+      const left  = idx > 0 ? wps[idx - 1] : (loop ? wps.at(-1) : undefined)
+      const right = idx < wps.length - 1 ? wps[idx + 1] : (loop ? wps[0] : undefined)
+
+      const coords: [number, number][] = []
+      if (left) coords.push([left.lng, left.lat])
+      coords.push([cur.lng, cur.lat])
+      if (right) coords.push([right.lng, right.lat])
+
+      if (coords.length >= 2) {
+        const previewSrc = map2.getSource('preview') as mapboxgl.GeoJSONSource | undefined
+        previewSrc?.setData({ type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: coords } })
+      }
+    })
+
+    marker.on('dragend', () => {
+      const map2 = mapRef.current
+      if (map2) clearPreview(map2)
+      suppressClickUntilRef.current = Date.now() + 300
+
+      const idx = markersRef.current.indexOf(marker)
+      if (idx === -1) return
+
+      if (isRoutingRef.current || isNavigatingRef.current) {
+        marker.setLngLat([dragOrigin.lng, dragOrigin.lat])
+        return
+      }
+
+      const cur = marker.getLngLat()
+      const newPos: LngLat = { lng: cur.lng, lat: cur.lat }
+      if (newPos.lng === dragOrigin.lng && newPos.lat === dragOrigin.lat) return
+
+      const wps = waypointsRef.current
+      const segs = segmentsRef.current
+      const loop = isLoopClosed(wps, segs)
+
+      const newWps = [...wps]
+      newWps[idx] = newPos
+
+      const leftSegIdx  = idx > 0 ? idx - 1 : (loop ? segs.length - 1 : undefined)
+      const rightSegIdx = idx < wps.length - 1 ? idx : (loop && idx === wps.length - 1 ? segs.length - 1 : undefined)
+      const segIndices = Array.from(new Set(
+        [leftSegIdx, rightSegIdx].filter((i): i is number => i !== undefined),
+      ))
+
+      if (segIndices.length === 0) {
+        // 아직 인접 구간이 없는 (연결 안 된) 단독 웨이포인트 — 위치만 갱신
+        waypointsRef.current = newWps
+        onRouteChangeRef.current([...waypointsRef.current], [...segmentsRef.current])
+        return
+      }
+
+      isRoutingRef.current = true
+      setIsRouting(true)
+      setRouteError(null)
+
+      Promise.all(segIndices.map(async si => {
+        const from = newWps[si]
+        const to = newWps[(si + 1) % newWps.length]
+        const seg = await getWalkingRoute(from, to)
+        return { si, seg }
+      }))
+        .then(results => {
+          const newSegs = [...segs]
+          results.forEach(({ si, seg }) => { newSegs[si] = seg })
+          waypointsRef.current = newWps
+          segmentsRef.current = newSegs
+          marker.setLngLat([newPos.lng, newPos.lat])
+          if (map2) applyRouteData(map2, segmentsRef.current)
+          onRouteChangeRef.current([...waypointsRef.current], [...segmentsRef.current])
+        })
+        .catch(() => {
+          marker.setLngLat([dragOrigin.lng, dragOrigin.lat])
+          setRouteError('이 구간의 도보 경로를 찾을 수 없습니다.')
+        })
+        .finally(() => {
+          isRoutingRef.current = false
+          setIsRouting(false)
+        })
+    })
+
+    return marker
+  }
+
   // ── Map init ───────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return
@@ -229,6 +352,7 @@ export default function MapView({
     if (!map || !mapLoaded) return
 
     const onClick = async (e: mapboxgl.MapMouseEvent) => {
+      if (Date.now() < suppressClickUntilRef.current) return
       const wps = waypointsRef.current
       const segs = segmentsRef.current
       if (isRoutingRef.current || isLoopClosed(wps, segs) || isNavigatingRef.current) return
@@ -237,8 +361,7 @@ export default function MapView({
       const lngLat: LngLat = { lng: e.lngLat.lng, lat: e.lngLat.lat }
       const prev = wps.at(-1)
 
-      const marker = new mapboxgl.Marker({ element: makeWaypointEl(wps.length) })
-        .setLngLat([lngLat.lng, lngLat.lat]).addTo(map)
+      const marker = createWaypointMarker(map, wps.length, lngLat)
       markersRef.current.push(marker)
       waypointsRef.current = [...wps, lngLat]
 
@@ -422,8 +545,7 @@ export default function MapView({
       try {
         for (let i = 0; i < initWps.length; i++) {
           const lngLat = initWps[i]
-          const marker = new mapboxgl.Marker({ element: makeWaypointEl(i) })
-            .setLngLat([lngLat.lng, lngLat.lat]).addTo(map)
+          const marker = createWaypointMarker(map, i, lngLat)
           markersRef.current.push(marker)
           waypointsRef.current = [...waypointsRef.current, lngLat]
           if (i > 0) {
@@ -497,10 +619,10 @@ export default function MapView({
     waypointsRef.current = isLoop ? [first] : [first, last]
     segmentsRef.current = [seg]
 
-    const startMarker = new mapboxgl.Marker({ element: makeWaypointEl(0) }).setLngLat([first.lng, first.lat]).addTo(map)
+    const startMarker = createWaypointMarker(map, 0, first)
     markersRef.current.push(startMarker)
     if (!isLoop) {
-      const endMarker = new mapboxgl.Marker({ element: makeWaypointEl(1) }).setLngLat([last.lng, last.lat]).addTo(map)
+      const endMarker = createWaypointMarker(map, 1, last)
       markersRef.current.push(endMarker)
     }
 
