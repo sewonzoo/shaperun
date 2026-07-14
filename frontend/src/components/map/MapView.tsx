@@ -33,7 +33,7 @@ interface Props {
 const isLoopClosed = (wps: LngLat[], segs: RouteSegment[]) =>
   wps.length > 0 && segs.length === wps.length
 
-function makeWaypointEl(index: number): HTMLElement {
+function makeWaypointEl(index: number, allowDrag: boolean = true): HTMLElement {
   const isStart = index === 0
   const el = document.createElement('div')
   el.style.cssText = [
@@ -42,7 +42,8 @@ function makeWaypointEl(index: number): HTMLElement {
     'border:3px solid #fff', 'border-radius:50%',
     'box-shadow:0 2px 8px rgba(0,0,0,0.35)',
     'display:flex', 'align-items:center', 'justify-content:center',
-    'font-size:7px', 'font-weight:700', 'color:#fff', 'cursor:grab',
+    'font-size:7px', 'font-weight:700', 'color:#fff',
+    `cursor:${allowDrag ? 'grab' : 'default'}`,
   ].join(';')
   if (!isStart) el.textContent = String(index + 1)
   return el
@@ -164,23 +165,40 @@ export default function MapView({
   // 추가되는 걸 막기 위한 타임스탬프 가드
   const suppressClickUntilRef = useRef(0)
 
+  // GPX로 가져온 코스의 시작/끝 마커는 영구히 드래그 불가 — markersRef 자체를
+  // { marker, allowDrag } 형태로 바꾸면 remove/slice/at(-1) 등 기존 코드를
+  // 전부 건드려야 해서, 대신 "드래그 불가 마커" 집합만 별도로 추적한다.
+  const nonDraggableMarkersRef = useRef<WeakSet<mapboxgl.Marker>>(new WeakSet())
+
   // 라우팅 중이거나 네비게이션 중일 땐 마커를 드래그할 수 없게 한다. Marker의
   // 'dragstart' 이벤트는 취소 가능한 DOM 이벤트가 아니라(e.preventDefault 없음)
   // draggable 자체를 꺼서 드래그가 시작되지 않도록 막는 게 유일하게 확실한 방법이다.
+  // (가져온 코스의 마커는 애초에 드래그 리스너가 없으므로 여기서 건드리지 않는다.)
   useEffect(() => {
     const draggable = !isNavigating && !isRouting
-    markersRef.current.forEach(m => m.setDraggable(draggable))
+    markersRef.current.forEach(m => {
+      if (nonDraggableMarkersRef.current.has(m)) return
+      m.setDraggable(draggable)
+    })
   }, [isNavigating, isRouting])
 
   // 웨이포인트 마커 생성 + 드래그로 위치 수정 배선. 드래그 중엔 인접 웨이포인트와
   // 잇는 직선 프리뷰만 그리고, 실제 재라우팅은 dragend에서 인접 구간만 골라 수행한다.
-  function createWaypointMarker(map: mapboxgl.Map, index: number, lngLat: LngLat): mapboxgl.Marker {
+  // allowDrag: false면 애초에 드래그 리스너를 붙이지 않는다 — GPX로 가져온 코스는
+  // 시작/끝점 사이에 원본 좌표 수백 개가 세그먼트 1개로 들어있어서, 드래그로 그
+  // 세그먼트를 재라우팅하면 원본 경로 모양이 통째로 도로 스냅 경로로 대체돼버린다.
+  function createWaypointMarker(map: mapboxgl.Map, index: number, lngLat: LngLat, allowDrag: boolean = true): mapboxgl.Marker {
     const marker = new mapboxgl.Marker({
-      element: makeWaypointEl(index),
-      draggable: !isRoutingRef.current && !isNavigatingRef.current,
+      element: makeWaypointEl(index, allowDrag),
+      draggable: allowDrag && !isRoutingRef.current && !isNavigatingRef.current,
     })
       .setLngLat([lngLat.lng, lngLat.lat])
       .addTo(map)
+
+    if (!allowDrag) {
+      nonDraggableMarkersRef.current.add(marker)
+      return marker
+    }
 
     let dragOrigin: LngLat = lngLat
 
@@ -619,10 +637,10 @@ export default function MapView({
     waypointsRef.current = isLoop ? [first] : [first, last]
     segmentsRef.current = [seg]
 
-    const startMarker = createWaypointMarker(map, 0, first)
+    const startMarker = createWaypointMarker(map, 0, first, false)
     markersRef.current.push(startMarker)
     if (!isLoop) {
-      const endMarker = createWaypointMarker(map, 1, last)
+      const endMarker = createWaypointMarker(map, 1, last, false)
       markersRef.current.push(endMarker)
     }
 
